@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="COOSH Finance"/>
   <link rel="manifest" href="./manifest.webmanifest"/>
   <link rel="icon" href="./icon.svg" type="image/svg+xml"/>
-  <title>COOSH Finance Control · Cloud V4.0</title>
+  <title>COOSH Finance Control · Cloud V4.1</title>
   <script>
 /* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
    No CDN dependency. */
@@ -127,14 +127,15 @@
     button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}
     .top{height:70px;background:#0d0e10;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
     .brand{font-weight:850}.brand:before{content:"";display:inline-block;width:10px;height:10px;background:#54dfa6;border-radius:50%;margin-right:8px}
-    .top-right{display:flex;gap:12px;align-items:center}.userline{font-size:12px;color:#c8ccd3}.container{max-width:1240px;margin:auto;padding:28px}
+    .top-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.userline{font-size:12px;color:#c8ccd3}.container{max-width:1240px;margin:auto;padding:28px}
     h1{margin:0;font-size:30px}h2{font-size:19px}h3{font-size:14px}.muted{color:var(--muted)}.small{font-size:12px}
     .pagehead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:5px 0 22px}.actions,.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
     .btn{border:1px solid #cfd4dc;background:#fff;border-radius:10px;padding:10px 14px;font-weight:800}.btn.black{background:#111;color:#fff;border-color:#111}
     .btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
-    .btn:disabled{opacity:.5;cursor:not-allowed}.person-tab.active{background:#111;color:#fff;border-color:#111}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.025);margin-bottom:18px}
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;cursor:pointer}
-    .stat strong{font-size:28px;display:block;margin:5px 0}.stat.pending{background:var(--yellow-bg)}.stat.approved{background:var(--green-bg)}.stat.rejected{background:var(--red-bg)}
+    .btn.compact{padding:8px 11px;font-size:13px;line-height:1.1}.btn:disabled{opacity:.5;cursor:not-allowed}.person-tab.active{background:#111;color:#fff;border-color:#111}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.025);margin-bottom:18px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px 12px;cursor:pointer;min-height:120px;display:flex;flex-direction:column;justify-content:space-between}
+    .stat span{font-size:13px;font-weight:800;line-height:1.15}.stat strong{font-size:28px;display:block;margin:6px 0 4px}.stat small{font-size:11px;line-height:1.2;color:var(--muted)}.stat.pending{background:var(--yellow-bg)}.stat.approved{background:var(--green-bg)}.stat.rejected{background:var(--red-bg)}
+    .monthly-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.summary-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fafbfc}.summary-card h3{margin:0 0 10px;font-size:15px}.summary-lines{display:grid;gap:8px}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.summary-line:last-child{border-bottom:0;padding-bottom:0}.summary-line span{color:var(--muted)}.summary-line b{white-space:nowrap}
     .tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:13px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
     th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#767c86}.right{text-align:right}.sub{font-size:12px;color:var(--muted);margin-top:4px}.link{color:#2458ff;font-weight:750;cursor:pointer}
     .badge{display:inline-block;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:850;background:#f1f2f4}.badge.submitted{background:var(--yellow-bg);color:var(--yellow)}
@@ -151,8 +152,8 @@
     .error{background:var(--red-bg);color:#922d36;padding:11px 13px;border-radius:10px;margin-top:12px;display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:80}
     .empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}
     .cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}
-    @media(max-width:900px){.stats{grid-template-columns:1fr 1fr}.detailgrid,.reportgrid{grid-template-columns:1fr}.userline{display:none}}
-    @media(max-width:650px){.container{padding:16px}.top{padding:0 14px}.stats{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.pagehead{flex-direction:column}.approval{grid-template-columns:1fr}.top .cloud{display:none}}
+    @media(max-width:900px){.detailgrid,.reportgrid,.monthly-summary{grid-template-columns:1fr}.userline{display:none}}
+    @media(max-width:650px){.container{padding:16px}.top{padding:0 14px;height:auto;min-height:62px;align-items:flex-start;padding-top:10px;padding-bottom:10px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.stat{padding:10px 8px;min-height:90px;aspect-ratio:1/1;border-radius:12px}.stat span{font-size:10px}.stat strong{font-size:20px;margin:4px 0 2px}.stat small{display:none}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.pagehead{flex-direction:column}.approval{grid-template-columns:1fr}.top .cloud{display:none}.actions{width:100%}.person-tab{flex:1 1 31%;min-width:0;padding:8px 6px;font-size:12px}.btn.compact{padding:7px 9px;font-size:12px}.top-right{gap:8px}.monthly-summary{grid-template-columns:1fr;gap:10px}}
   </style>
 </head>
 <body>
@@ -207,7 +208,7 @@
 <div id="appView" style="display:none">
   <header class="top">
     <div class="brand">COOSH Finance Control <span class="cloud">CLOUD</span></div>
-    <div class="top-right"><button class="btn" id="notifyBtn" style="padding:8px 11px;display:none" onclick="enablePushNotifications()">🔔 Увімкнути сповіщення</button><span class="userline" id="userLine"></span><button class="btn" style="padding:8px 11px" onclick="logout()">Вийти</button></div>
+    <div class="top-right"><button class="btn compact" id="notifyBtn" style="display:none" onclick="enablePushNotifications()">🔔 Увімкнути</button><span class="userline" id="userLine"></span><button class="btn compact" onclick="logout()">Вийти</button></div>
   </header>
 
   <main class="container">
@@ -251,6 +252,14 @@
     <section id="reportSection" style="display:none">
       <div class="notice"><b>Контроль:</b> у місячний звіт автоматично допускаються тільки Approved / Paid / Included. Draft, Pending і Rejected виключені.</div>
       <div class="filters" style="margin-bottom:16px"><input type="month" id="reportMonth" style="max-width:180px" onchange="renderReport()"></div>
+      <div class="card">
+        <div class="pagehead" style="margin:0 0 10px"><div><h2 style="margin:0">Загальна місячна сума витрат</h2><div class="muted small">Показані тільки витрати типу «Оплата», без позик.</div></div></div>
+        <div class="monthly-summary">
+          <div class="summary-card"><h3>Петро</h3><div class="summary-lines" id="monthTotalsPetro"></div></div>
+          <div class="summary-card"><h3>Аліна</h3><div class="summary-lines" id="monthTotalsAlina"></div></div>
+          <div class="summary-card"><h3>Разом</h3><div class="summary-lines" id="monthTotalsCombined"></div></div>
+        </div>
+      </div>
       <div class="reportgrid">
         <div class="card"><h2>Approved expenses</h2><div id="categoryTotals"></div></div>
         <div class="card"><h2>Не включено</h2><div id="excludedTotals"></div></div>
@@ -369,9 +378,9 @@ async function refreshNotificationButton(){
     btn.textContent="🔕 Push недоступні";btn.disabled=true;return;
   }
   if(Notification.permission==="granted"){
-    btn.textContent="🔔 Сповіщення увімкнено";btn.disabled=false;
+    btn.textContent="🔔 Сповіщення";btn.disabled=false;
   }else{
-    btn.textContent="🔔 Увімкнути сповіщення";btn.disabled=false;
+    btn.textContent="🔔 Увімкнути";btn.disabled=false;
   }
 }
 async function enablePushNotifications(){
@@ -630,8 +639,22 @@ async function paidCurrent(){await callRpc("mark_expense_paid",{p_id:currentDeta
 async function openDocument(path){
   const r=await sb.storage.from("expense-documents").createSignedUrl(path,90);if(r.error){toast(r.error.message);return}window.open(r.data.signedUrl,"_blank");
 }
+function currencyBreakdown(list){
+  const order=["UAH","USD","EUR"];
+  const by={UAH:0,USD:0,EUR:0};
+  list.forEach(x=>{ if(by[x.currency]!==undefined) by[x.currency]+=Number(x.amount)||0; });
+  return order.map(c=>`<div class="summary-line"><span>${c}</span><b>${money(by[c],c)}</b></div>`).join("");
+}
+function renderMonthlySummary(month){
+  const eligible=expenses.filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
+  const petro=eligible.filter(x=>(x.expense_person||"petro")==="petro");
+  const alina=eligible.filter(x=>(x.expense_person||"petro")==="alina");
+  document.getElementById("monthTotalsPetro").innerHTML=currencyBreakdown(petro);
+  document.getElementById("monthTotalsAlina").innerHTML=currencyBreakdown(alina);
+  document.getElementById("monthTotalsCombined").innerHTML=currencyBreakdown(eligible);
+}
 function renderReport(){
-  const m=document.getElementById("reportMonth").value, eligible=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
+  const m=document.getElementById("reportMonth").value;renderMonthlySummary(m);const eligible=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
   const cats={};eligible.forEach(x=>{const k=x.category+"|"+x.currency;cats[k]=(cats[k]||0)+Number(x.amount)});
   document.getElementById("categoryTotals").innerHTML=Object.entries(cats).length?Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{const [cat,c]=k.split("|");return `<div class="rowline"><span>${esc(cat)}</span><b>${money(v,c)}</b></div>`}).join(""):'<div class="muted">Ще немає approved витрат.</div>';
   document.getElementById("excludedTotals").innerHTML=["draft","submitted","rejected"].map(s=>{const arr=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&x.status===s),by={};arr.forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
