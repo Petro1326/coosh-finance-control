@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>COOSH Finance Control · Cloud V3.4</title>
+  <script>
+/* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
+   No CDN dependency. */
+(function(){
+  const STORE='coosh_supabase_session_v1';
+  function safeGet(){try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch(e){return null}}
+  function safeSet(v){try{localStorage.setItem(STORE,JSON.stringify(v))}catch(e){}}
+  function safeDel(){try{localStorage.removeItem(STORE)}catch(e){}}
+  function errObj(x,status){return {message:(x&&x.message)||((x&&x.error_description)||(x&&x.error))||('HTTP '+status),details:x&&x.details,hint:x&&x.hint,code:x&&x.code}}
+  async function requestWithTimeout(url,opt={},timeoutMs=15000){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      return await fetch(url,Object.assign({},opt,{signal:controller.signal}));
+    }catch(e){
+      if(e && e.name==='AbortError'){
+        const err=new Error('TIMEOUT: Supabase не відповідає понад '+Math.round(timeoutMs/1000)+' секунд');
+        err.code='TIMEOUT';
+        throw err;
+      }
+      throw e;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+  async function parseRes(r){
+    const t=await r.text(); let j=null;
+    if(t){try{j=JSON.parse(t)}catch(e){j=t}}
+    if(!r.ok) return {data:null,error:errObj(typeof j==='object'?j:{message:String(j||r.statusText)},r.status)};
+    return {data:j,error:null};
+  }
+  class QueryBuilder{
+    constructor(c,t){this.c=c;this.t=t;this.q=new URLSearchParams();this.orders=[];this.isSingle=false}
+    select(cols='*'){this.q.set('select',cols);return this}
+    eq(col,val){this.q.append(col,'eq.'+String(val));return this}
+    order(col,opt={}){this.orders.push(col+'.'+((opt&&opt.ascending===false)?'desc':'asc'));return this}
+    single(){this.isSingle=true;return this._run()}
+    then(a,b){return this._run().then(a,b)}
+    async _run(){
+      if(this.orders.length)this.q.set('order',this.orders.join(','));
+      if(this.isSingle)this.q.set('limit','1');
+      const r=await this.c._fetch('/rest/v1/'+encodeURIComponent(this.t)+'?'+this.q.toString(),{method:'GET'});
+      if(r.error)return r;
+      if(this.isSingle){
+        const arr=Array.isArray(r.data)?r.data:[];
+        if(arr.length!==1)return {data:null,error:{message:arr.length?'Multiple rows returned':'No rows returned'}};
+        return {data:arr[0],error:null};
+      }
+      return r;
+    }
+  }
+  class Client{
+    constructor(url,key){this.url=String(url||'').replace(/\/$/,'');this.key=key;this._session=safeGet();this.auth={
+      signInWithPassword: async ({email,password})=>{
+        try{
+          const r=await requestWithTimeout(this.url+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':this.key,'Content-Type':'application/json'},body:JSON.stringify({email,password})},15000);
+          const x=await parseRes(r); if(x.error)return x;
+          const s={access_token:x.data.access_token,refresh_token:x.data.refresh_token,user:x.data.user,expires_at:Math.floor(Date.now()/1000)+(x.data.expires_in||3600)};
+          this._session=s;safeSet(s);return {data:{session:s,user:s.user},error:null};
+        }catch(e){
+          return {data:null,error:{message:e && e.message ? e.message : String(e),code:e && e.code ? e.code : 'NETWORK'}};
+        }
+      },
+      getSession: async ()=>{const s=await this._validSession();return {data:{session:s},error:null}},
+      signOut: async ()=>{try{const s=await this._validSession();if(s)await requestWithTimeout(this.url+'/auth/v1/logout',{method:'POST',headers:{apikey:this.key,Authorization:'Bearer '+s.access_token}})}catch(e){}this._session=null;safeDel();return {error:null}}
+    };
+    this.storage={from:(bucket)=>({
+      upload:async(path,file,opt={})=>{
+        const s=await this._validSession();if(!s)return {data:null,error:{message:'Session expired. Sign in again.'}};
+        const r=await requestWithTimeout(this.url+'/storage/v1/object/'+encodeURIComponent(bucket)+'/'+path.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:{apikey:this.key,Authorization:'Bearer '+s.access_token,'x-upsert':String(!!opt.upsert),'Content-Type':file.type||'application/octet-stream'},body:file});
+        return parseRes(r);
+      },
+      createSignedUrl:async(path,seconds)=>{
+        const s=await this._validSession();if(!s)return {data:null,error:{message:'Session expired. Sign in again.'}};
+        const endpoint='/storage/v1/object/sign/'+encodeURIComponent(bucket)+'/'+path.split('/').map(encodeURIComponent).join('/');
+        const r=await requestWithTimeout(this.url+endpoint,{method:'POST',headers:{apikey:this.key,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:JSON.stringify({expiresIn:seconds})});
+        const x=await parseRes(r);if(x.error)return x;
+        let u=x.data&&(x.data.signedURL||x.data.signedUrl||x.data.signed_url);
+        if(u&&u.startsWith('/'))u=this.url+u;
+        return {data:{signedUrl:u},error:null};
+      }
+    })};
+    }
+    async _validSession(){
+      let s=this._session||safeGet();if(!s)return null;
+      if((s.expires_at||0)>Math.floor(Date.now()/1000)+60){this._session=s;return s}
+      if(!s.refresh_token){this._session=null;safeDel();return null}
+      try{
+        const r=await requestWithTimeout(this.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:this.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:s.refresh_token})});
+        const x=await parseRes(r);if(x.error){this._session=null;safeDel();return null}
+        s={access_token:x.data.access_token,refresh_token:x.data.refresh_token||s.refresh_token,user:x.data.user||s.user,expires_at:Math.floor(Date.now()/1000)+(x.data.expires_in||3600)};
+        this._session=s;safeSet(s);return s;
+      }catch(e){return s}
+    }
+    async _fetch(path,opt={}){
+      let s=await this._validSession();if(!s)return {data:null,error:{message:'Session expired. Sign in again.'}};
+      const headers=Object.assign({apikey:this.key,Authorization:'Bearer '+s.access_token,Accept:'application/json'},opt.headers||{});
+      try{return await parseRes(await requestWithTimeout(this.url+path,Object.assign({},opt,{headers})))}catch(e){return {data:null,error:{message:e.message||String(e)}}}
+    }
+    from(t){return new QueryBuilder(this,t)}
+    async rpc(name,args={}){return this._fetch('/rest/v1/rpc/'+encodeURIComponent(name),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)})}
+    channel(){return {on(){return this},subscribe(){return this}}}
+    async removeChannel(){return 'ok'}
+  }
+  window.supabase={createClient:(url,key)=>new Client(url,key)};
+})();
+</script>
+  <style>
+    :root{
+      --bg:#f5f6f8;--card:#fff;--text:#121212;--muted:#70757e;--line:#e3e6ea;
+      --green:#0b9966;--green-bg:#e8f8f1;--yellow:#9b6500;--yellow-bg:#fff3d2;
+      --red:#bb3e49;--red-bg:#ffedf0;--blue:#2458ff;--blue-bg:#eef2ff;--black:#111;
+    }
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}
+    .top{height:70px;background:#0d0e10;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+    .brand{font-weight:850}.brand:before{content:"";display:inline-block;width:10px;height:10px;background:#54dfa6;border-radius:50%;margin-right:8px}
+    .top-right{display:flex;gap:12px;align-items:center}.userline{font-size:12px;color:#c8ccd3}.container{max-width:1240px;margin:auto;padding:28px}
+    h1{margin:0;font-size:30px}h2{font-size:19px}h3{font-size:14px}.muted{color:var(--muted)}.small{font-size:12px}
+    .pagehead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:5px 0 22px}.actions,.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid #cfd4dc;background:#fff;border-radius:10px;padding:10px 14px;font-weight:800}.btn.black{background:#111;color:#fff;border-color:#111}
+    .btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+    .btn:disabled{opacity:.5;cursor:not-allowed}.person-tab.active{background:#111;color:#fff;border-color:#111}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.025);margin-bottom:18px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;cursor:pointer}
+    .stat strong{font-size:28px;display:block;margin:5px 0}.stat.pending{background:var(--yellow-bg)}.stat.approved{background:var(--green-bg)}.stat.rejected{background:var(--red-bg)}
+    .tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:13px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#767c86}.right{text-align:right}.sub{font-size:12px;color:var(--muted);margin-top:4px}.link{color:#2458ff;font-weight:750;cursor:pointer}
+    .badge{display:inline-block;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:850;background:#f1f2f4}.badge.submitted{background:var(--yellow-bg);color:var(--yellow)}
+    .badge.approved,.badge.paid,.badge.included{background:var(--green-bg);color:var(--green)}.badge.rejected{background:var(--red-bg);color:var(--red)}.badge.draft{color:#636872}
+    input,select,textarea{width:100%;border:1px solid #d5dae2;border-radius:10px;padding:10px;background:#fff}textarea{min-height:88px;resize:vertical}
+    label{font-size:12px;font-weight:800;display:flex;flex-direction:column;gap:7px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.span2{grid-column:span 2}
+    .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.47);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal{background:#fff;border-radius:18px;max-width:770px;width:100%;max-height:92vh;overflow:auto;padding:22px}
+    .modal.wide{max-width:1020px}.modalhead{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.x{width:34px;height:34px;border:0;border-radius:9px;background:#f0f2f4;font-size:20px}
+    .detailgrid,.reportgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.kv{display:grid;grid-template-columns:145px 1fr;gap:10px 12px}.kv div:nth-child(odd){color:var(--muted)}
+    .approval{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.timeline{display:flex;flex-direction:column;gap:14px}.event{display:flex;gap:10px}.dot{width:9px;height:9px;background:#111;border-radius:50%;margin-top:5px;flex:none}
+    .notice{padding:13px 15px;background:var(--green-bg);border-radius:11px;margin-bottom:16px}.warning{background:var(--yellow-bg)}.rowline{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid var(--line)}
+    .authwrap,.setupwrap{min-height:82vh;display:grid;place-items:center}.authcard,.setupcard{width:min(470px,95vw);background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 14px 45px rgba(0,0,0,.08)}
+    .logo{width:48px;height:48px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}.stack{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+    .error{background:var(--red-bg);color:#922d36;padding:11px 13px;border-radius:10px;margin-top:12px;display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:80}
+    .empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}
+    .cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}
+    @media(max-width:900px){.stats{grid-template-columns:1fr 1fr}.detailgrid,.reportgrid{grid-template-columns:1fr}.userline{display:none}}
+    @media(max-width:650px){.container{padding:16px}.top{padding:0 14px}.stats{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.pagehead{flex-direction:column}.approval{grid-template-columns:1fr}.top .cloud{display:none}}
+  </style>
+</head>
+<body>
+<div id="bootView">
+  <div class="setupwrap">
+    <div class="setupcard">
+      <div class="logo">C</div>
+      <h1 style="margin-top:16px">COOSH Finance Control</h1>
+      <p class="muted" id="bootText">Завантаження системи…</p>
+      <div class="error" id="bootError" style="display:none"></div>
+    </div>
+  </div>
+</div>
+<div id="setupView" style="display:none">
+  <div class="setupwrap">
+    <div class="setupcard">
+      <div class="logo">C</div>
+      <h1 style="margin-top:16px">Підключення хмари</h1>
+      <p class="muted">Встав Supabase Project URL та <b>publishable/anon key</b>. Вони зберігаються лише у цьому браузері.</p>
+      <div class="notice warning small"><b>Не вставляй service_role key.</b> У браузері має використовуватися тільки publishable/anon key.</div>
+      <form class="stack" onsubmit="saveCloudConfig(event)">
+        <label>Supabase Project URL<input id="setupUrl" required placeholder="https://xxxxx.supabase.co"></label>
+        <label>Publishable / anon key<input id="setupKey" required placeholder="sb_publishable_..."></label>
+        <button class="btn black" type="submit">Підключити</button>
+      </form>
+      <p class="small muted">Перед цим один раз виконай SQL-файли з комплекту в Supabase SQL Editor.</p>
+    </div>
+  </div>
+</div>
+
+<div id="authView" style="display:none">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="logo">C</div>
+      <h1 style="margin-top:16px">COOSH Finance Control</h1>
+      <p class="muted">Увійди своїм робочим акаунтом.</p>
+      <form class="stack" onsubmit="login(event)">
+        <label>Email<input id="loginEmail" type="email" required></label>
+        <label>Пароль<input id="loginPassword" type="password" required></label>
+        <button class="btn black" id="loginBtn" type="submit">Увійти</button>
+      </form>
+      <div class="error" id="loginError"></div>
+      <div class="actions" style="margin-top:16px">
+        <button class="btn" type="button" onclick="testConnection()">Перевірити з'єднання</button>
+        <span class="link small" onclick="resetCloudConfig()">Змінити cloud-підключення</span>
+      </div>
+      <div class="muted small" id="connectionInfo" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="appView" style="display:none">
+  <header class="top">
+    <div class="brand">COOSH Finance Control <span class="cloud">CLOUD</span></div>
+    <div class="top-right"><span class="userline" id="userLine"></span><button class="btn" style="padding:8px 11px" onclick="logout()">Вийти</button></div>
+  </header>
+
+  <main class="container">
+    <div class="pagehead">
+      <div><h1 id="pageTitle">Витрати</h1><div class="muted" id="pageSub">Спільна база · approval власника · audit trail.</div></div>
+      <div class="actions">
+        <button class="btn" onclick="showSection('expenses')">Витрати</button>
+        <button class="btn" onclick="showSection('report')">Місячний звіт</button>
+        <button class="btn black" id="newExpenseBtn" onclick="openNew()">+ Нова витрата</button>
+      </div>
+    </div>
+
+    <section id="expensesSection">
+      <div class="filters" style="margin-bottom:16px">
+        <button class="btn person-tab active" id="personPetro" onclick="setPerson('petro')">Витрати Петро</button>
+        <button class="btn person-tab" id="personAlina" onclick="setPerson('alina')">Витрати Аліни</button>
+        <button class="btn person-tab" id="personCombined" onclick="setPerson('combined')">Спільні</button>
+      </div>
+      <div class="stats">
+        <div class="stat pending" onclick="setStatusFilter('submitted')"><span>На погодженні</span><strong id="statPending">0</strong><small id="sumPending"></small></div>
+        <div class="stat approved" onclick="setStatusFilter('approved')"><span>Approved</span><strong id="statApproved">0</strong><small>можуть увійти у звіт</small></div>
+        <div class="stat" onclick="setStatusFilter('paid')"><span>Оплачено</span><strong id="statPaid">0</strong><small>тільки після approval</small></div>
+        <div class="stat rejected" onclick="setStatusFilter('rejected')"><span>Відхилено</span><strong id="statRejected">0</strong><small>не входять у звіт</small></div>
+      </div>
+      <div class="card">
+        <div class="filters">
+          <input type="month" id="monthFilter" style="max-width:180px" onchange="renderExpenses()">
+          <select id="statusFilter" style="max-width:210px" onchange="renderExpenses()">
+            <option value="">Усі статуси</option><option value="draft">Чернетка</option><option value="submitted">На погодженні</option>
+            <option value="approved">Затверджено</option><option value="rejected">Відхилено</option><option value="paid">Оплачено</option><option value="included">У звіті</option>
+          </select>
+          <button class="btn" onclick="refreshAll()">Оновити</button>
+        </div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Дата</th><th>Кому</th><th>Контрагент</th><th>Категорія</th><th>Компанія</th><th class="right">Сума</th><th>Статус</th><th></th></tr></thead>
+          <tbody id="expenseRows"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="reportSection" style="display:none">
+      <div class="notice"><b>Контроль:</b> у місячний звіт автоматично допускаються тільки Approved / Paid / Included. Draft, Pending і Rejected виключені.</div>
+      <div class="filters" style="margin-bottom:16px"><input type="month" id="reportMonth" style="max-width:180px" onchange="renderReport()"></div>
+      <div class="reportgrid">
+        <div class="card"><h2>Approved expenses</h2><div id="categoryTotals"></div></div>
+        <div class="card"><h2>Не включено</h2><div id="excludedTotals"></div></div>
+      </div>
+      <div class="card">
+        <div class="pagehead" style="margin:0 0 10px"><h2 style="margin:0">Деталізація</h2><button class="btn blue" id="finalizeBtn" onclick="finalizeMonth()">Зафіксувати місяць</button></div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Дата</th><th>Кому</th><th>Категорія</th><th>Контрагент</th><th>Компанія</th><th class="right">Сума</th><th>Статус</th></tr></thead>
+          <tbody id="reportRows"></tbody>
+        </table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modalbg" id="expenseModal">
+  <div class="modal">
+    <div class="modalhead"><div><h2 style="margin:0" id="expenseModalTitle">Нова витрата</h2><div class="muted small">Вводить бухгалтер.</div></div><button class="x" onclick="closeModal('expenseModal')">×</button></div>
+    <form id="expenseForm" class="formgrid" onsubmit="saveExpense(event)">
+      <input type="hidden" id="editId">
+      <label>Дата<input type="date" id="fDate" required></label>
+      <label>Чиї витрати
+        <select id="fPerson">
+          <option value="petro">Петро</option>
+          <option value="alina">Аліна</option>
+        </select>
+      </label>
+      <label>Компанія<select id="fEntity"><option>COOSH UA</option><option>COOSH Poland</option><option>COOSH US</option><option>COOSH Holding</option></select></label>
+      <label>Категорія<select id="fCategory"><option>COGS</option><option>Marketing</option><option>Payroll</option><option>Rent</option><option>Logistics</option><option>Software</option><option>Professional services</option><option>Utilities</option><option>Taxes & fees</option><option>Other OPEX</option></select></label>
+      <label>Контрагент<input id="fCounterparty" required></label>
+      <label class="span2">Опис<textarea id="fDescription" required></textarea></label>
+      <label>Сума<input id="fAmount" type="number" step="0.01" min="0.01" required></label>
+      <label>Валюта<select id="fCurrency"><option>UAH</option><option>USD</option><option>EUR</option><option>PLN</option></select></label>
+      <label>Спосіб оплати<select id="fPayment"><option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option></select></label>
+      <label>Інвойс / чек<input id="fFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.xlsx,.xls,.doc,.docx"><span class="muted small">До 12 MB рекомендовано.</span></label>
+      <div class="span2 actions"><button class="btn black" id="saveExpenseBtn" type="submit">Зберегти</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modalbg" id="detailModal">
+  <div class="modal wide">
+    <div class="modalhead"><div><h2 id="dTitle" style="margin:0"></h2><div id="dSub" class="muted small"></div></div><button class="x" onclick="closeModal('detailModal')">×</button></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+window.addEventListener("error", function(e){
+  const b=document.getElementById("bootView");
+  const er=document.getElementById("bootError");
+  const bt=document.getElementById("bootText");
+  if(b && er && bt && document.getElementById("appView").style.display==="none"){
+    b.style.display="block";
+    bt.textContent="Помилка запуску.";
+    er.style.display="block";
+    er.textContent=e.message || "Невідома помилка JavaScript";
+  }
+});
+const STATUS_LABELS={draft:"Чернетка",submitted:"На погодженні",approved:"Затверджено",rejected:"Відхилено",paid:"Оплачено",included:"У звіті"};
+const ACTION_LABELS={created:"Створено",updated:"Відредаговано",attachment_added:"Додано документ",submitted:"Відправлено на погодження",approved:"Затверджено",rejected:"Відхилено",paid:"Позначено як оплачено",included:"Включено у місячний звіт"};
+let sb=null, currentUser=null, profile=null, expenses=[], profiles={}, auditLogs=[], currentDetail=null, realtimeChannel=null, currentPerson="petro";
+
+function cfg(){return {url:localStorage.getItem("coosh_sb_url")||"",key:localStorage.getItem("coosh_sb_key")||""}}
+function initClient(){const c=cfg();if(!c.url||!c.key)return false;sb=supabase.createClient(c.url,c.key);return true}
+function today(){return new Date().toISOString().slice(0,10)}
+function currentMonth(){return new Date().toISOString().slice(0,7)}
+function money(v,c){return new Intl.NumberFormat("uk-UA",{maximumFractionDigits:2}).format(Number(v)||0)+" "+c}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",2400)}
+function statusBadge(s){return `<span class="badge ${s}">${STATUS_LABELS[s]||esc(s)}</span>`}
+function personLabel(p){return p==="alina"?"Аліна":"Петро"}
+function setPerson(p){
+  currentPerson=p;
+  ["petro","alina","combined"].forEach(k=>{
+    const id=k==="petro"?"personPetro":k==="alina"?"personAlina":"personCombined";
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle("active",k===p);
+  });
+  renderAll();
+}
+function personFiltered(list){
+  if(currentPerson==="combined") return list;
+  return list.filter(x=>(x.expense_person||"petro")===currentPerson);
+}
+function openModal(id){document.getElementById(id).style.display="flex"}function closeModal(id){document.getElementById(id).style.display="none"}
+
+async function waitForSupabase(){
+  for(let i=0;i<5;i++){
+    if(window.supabase && typeof window.supabase.createClient==="function") return true;
+    await new Promise(r=>setTimeout(r,200));
+  }
+  return false;
+}
+async function boot(){
+  document.getElementById("monthFilter").value=currentMonth();
+  document.getElementById("reportMonth").value=currentMonth();
+  showOnly("bootView");
+
+  const ok=await waitForSupabase();
+  if(!ok){
+    const err=document.getElementById("bootError");
+    document.getElementById("bootText").textContent="Не вдалося завантажити компонент Supabase.";
+    err.style.display="block";
+    err.innerHTML="<b>Що зробити:</b><br>1. Переконайся, що є інтернет.<br>2. Відкрий цей файл у Google Chrome, не Safari.<br>3. Якщо є VPN/ad blocker — тимчасово вимкни для цієї сторінки.<br>4. Онови сторінку.";
+    return;
+  }
+
+  if(!initClient()){showOnly("setupView");return}
+  try{
+    const {data:{session},error}=await sb.auth.getSession();
+    if(error) throw error;
+    if(!session){showOnly("authView");return}
+    currentUser=session.user;
+    await loadApp();
+  }catch(e){
+    const err=document.getElementById("bootError");
+    showOnly("bootView");
+    document.getElementById("bootText").textContent="Не вдалося підключитися до Supabase.";
+    err.style.display="block";
+    err.textContent=e?.message || String(e);
+  }
+}
+function showOnly(id){
+  ["bootView","setupView","authView","appView"].forEach(x=>{
+    const el=document.getElementById(x);
+    if(el) el.style.display=x===id?"block":"none";
+  });
+  if(id==="authView"){
+    const c=cfg(),info=document.getElementById("connectionInfo");
+    if(info && c.url){
+      try{info.textContent="Cloud: "+new URL(c.url).host}catch(e){}
+    }
+  }
+}
+function saveCloudConfig(e){
+  e.preventDefault();localStorage.setItem("coosh_sb_url",document.getElementById("setupUrl").value.trim().replace(/\/$/,""));localStorage.setItem("coosh_sb_key",document.getElementById("setupKey").value.trim());
+  location.reload();
+}
+function resetCloudConfig(){localStorage.removeItem("coosh_sb_url");localStorage.removeItem("coosh_sb_key");location.reload()}
+async function login(e){
+  e.preventDefault();
+  const btn=document.getElementById("loginBtn"),err=document.getElementById("loginError");
+  err.style.display="none";err.textContent="";
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Вхід';
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({
+      email:document.getElementById("loginEmail").value.trim(),
+      password:document.getElementById("loginPassword").value
+    });
+    if(error){
+      let msg=error.message||"Помилка входу";
+      if((error.code==="TIMEOUT") || msg.includes("TIMEOUT")){
+        msg="Supabase не відповів за 15 секунд. Натисни «Перевірити з'єднання».";
+      }else if(msg.toLowerCase().includes("failed to fetch")){
+        msg="Chrome не може з'єднатися з Supabase. Перевір інтернет/VPN/DNS або cloud-підключення.";
+      }
+      err.textContent=msg;err.style.display="block";return;
+    }
+    currentUser=data.user;
+    await loadApp();
+  }catch(ex){
+    err.textContent="Помилка мережі: "+(ex?.message||String(ex));err.style.display="block";
+  }finally{
+    btn.disabled=false;btn.textContent="Увійти";
+  }
+}
+async function testConnection(){
+  const err=document.getElementById("loginError"),info=document.getElementById("connectionInfo");
+  err.style.display="none";info.textContent="Перевірка з'єднання…";
+  const c=cfg();
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),12000);
+    let r;
+    try{
+      r=await fetch(c.url+"/auth/v1/settings",{method:"GET",headers:{apikey:c.key},signal:controller.signal});
+    }finally{clearTimeout(timer)}
+    if(!r.ok){
+      const txt=await r.text();
+      info.textContent="";
+      err.textContent="Supabase відповідає, але cloud-підключення відхилено: HTTP "+r.status+" "+txt.slice(0,160);
+      err.style.display="block";return;
+    }
+    info.textContent="✓ З'єднання з Supabase працює. Якщо логін не проходить — перевір email/пароль та роль акаунта.";
+  }catch(ex){
+    info.textContent="";
+    const isTimeout=ex && ex.name==="AbortError";
+    err.textContent=isTimeout
+      ? "Не вдалося дістатися до Supabase за 12 секунд. Спробуй інший Wi‑Fi/мобільний hotspot і вимкни VPN/ad blocker."
+      : "Не вдалося з'єднатися з Supabase: "+(ex?.message||String(ex));
+    err.style.display="block";
+  }
+}
+async function logout(){if(realtimeChannel)clearInterval(realtimeChannel);await sb.auth.signOut();currentUser=null;profile=null;showOnly("authView")}
+async function loadApp(){
+  const {data:p,error}=await sb.from("profiles").select("user_id,display_name,email,role").eq("user_id",currentUser.id).single();
+  if(error||!p){showOnly("authView");alert("Для цього акаунта не призначена роль у таблиці profiles. Виконай 02_assign_users.sql.");return}
+  profile=p;showOnly("appView");document.getElementById("userLine").textContent=`${p.display_name} · ${p.role==="owner"?"Власник":"Бухгалтер"}`;
+  document.getElementById("newExpenseBtn").style.display=p.role==="accountant"?"inline-block":"none";document.getElementById("finalizeBtn").style.display=p.role==="owner"?"inline-block":"none";
+  await refreshAll();subscribeRealtime();
+}
+function subscribeRealtime(){
+  if(realtimeChannel)clearInterval(realtimeChannel);
+  realtimeChannel=setInterval(()=>refreshAll(),8000);
+}
+async function refreshAll(){
+  const [ex,pr,al]=await Promise.all([
+    sb.from("expenses").select("*").order("expense_date",{ascending:false}).order("created_at",{ascending:false}),
+    sb.from("profiles").select("user_id,display_name,email,role"),
+    sb.from("audit_log").select("*").order("created_at",{ascending:false})
+  ]);
+  if(ex.error){toast(ex.error.message);return}
+  expenses=ex.data||[];profiles={};(pr.data||[]).forEach(x=>profiles[x.user_id]=x);auditLogs=al.data||[];
+  renderAll();
+}
+function showSection(s){
+  const isExp=s==="expenses";document.getElementById("expensesSection").style.display=isExp?"block":"none";document.getElementById("reportSection").style.display=isExp?"none":"block";
+  document.getElementById("pageTitle").textContent=isExp?"Витрати":"Місячний звіт";document.getElementById("pageSub").textContent=isExp?"Спільна база · approval власника · audit trail.":"Тільки затверджені витрати.";
+  if(!isExp)renderReport();
+}
+function setStatusFilter(s){document.getElementById("statusFilter").value=s;renderExpenses()}
+function renderStats(){
+  const scoped=personFiltered(expenses);
+  const cnt=s=>scoped.filter(x=>x.status===s).length;
+  document.getElementById("statPending").textContent=cnt("submitted");document.getElementById("statApproved").textContent=cnt("approved");document.getElementById("statPaid").textContent=cnt("paid");document.getElementById("statRejected").textContent=cnt("rejected");
+  const by={};scoped.filter(x=>x.status==="submitted").forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
+  document.getElementById("sumPending").textContent=Object.entries(by).map(([c,v])=>money(v,c)).join(" · ")||"0";
+}
+function renderExpenses(){
+  renderStats();const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;
+  const rows=personFiltered(expenses).filter(x=>(!m||x.expense_date.startsWith(m))&&(!s||x.status===s));
+  document.getElementById("expenseRows").innerHTML=rows.length?rows.map(x=>`<tr>
+    <td>${x.expense_date}</td><td><b>${personLabel(x.expense_person||"petro")}</b></td><td><b>${esc(x.counterparty)}</b><div class="sub">${esc(x.description)}</div></td><td>${esc(x.category)}</td><td>${esc(x.entity)}</td>
+    <td class="right"><b>${money(x.amount,x.currency)}</b></td><td>${statusBadge(x.status)}</td><td><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Немає витрат.</td></tr>`;
+}
+function openNew(){
+  if(profile.role!=="accountant"){toast("Нові витрати створює бухгалтер");return}
+  document.getElementById("expenseForm").reset();document.getElementById("editId").value="";document.getElementById("fDate").value=today();document.getElementById("fPerson").value=currentPerson==="alina"?"alina":"petro";document.getElementById("expenseModalTitle").textContent="Нова витрата";openModal("expenseModal");
+}
+function openEdit(id){
+  const x=expenses.find(v=>v.id===id);if(!x||profile.role!=="accountant"||!["draft","rejected"].includes(x.status))return;
+  closeModal("detailModal");document.getElementById("editId").value=id;document.getElementById("expenseModalTitle").textContent="Редагувати витрату";
+  document.getElementById("fDate").value=x.expense_date;document.getElementById("fPerson").value=x.expense_person||"petro";document.getElementById("fEntity").value=x.entity;document.getElementById("fCategory").value=x.category;document.getElementById("fCounterparty").value=x.counterparty;
+  document.getElementById("fDescription").value=x.description;document.getElementById("fAmount").value=x.amount;document.getElementById("fCurrency").value=x.currency;document.getElementById("fPayment").value=x.payment_method||"Bank transfer";
+  document.getElementById("fFile").value="";openModal("expenseModal");
+}
+async function saveExpense(e){
+  e.preventDefault();const btn=document.getElementById("saveExpenseBtn");btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Збереження';
+  const id=document.getElementById("editId").value;
+  const vals={p_expense_date:document.getElementById("fDate").value,p_expense_person:document.getElementById("fPerson").value,p_entity:document.getElementById("fEntity").value,p_category:document.getElementById("fCategory").value,p_counterparty:document.getElementById("fCounterparty").value.trim(),p_description:document.getElementById("fDescription").value.trim(),p_amount:Number(document.getElementById("fAmount").value),p_currency:document.getElementById("fCurrency").value,p_payment_method:document.getElementById("fPayment").value};
+  let result;
+  if(id)result=await sb.rpc("update_expense",{p_id:id,...vals});
+  else result=await sb.rpc("create_expense",vals);
+  if(result.error){btn.disabled=false;btn.textContent="Зберегти";toast(result.error.message);return}
+  const expenseId=id||result.data;const file=document.getElementById("fFile").files[0];
+  if(file){
+    if(file.size>15*1024*1024){toast("Файл більший за 15 MB. Витрату збережено без файлу.");}
+    else{
+      const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const path=`${currentUser.id}/${expenseId}/${Date.now()}_${safe}`;
+      const up=await sb.storage.from("expense-documents").upload(path,file,{upsert:false});
+      if(up.error)toast("Витрату збережено, але файл не завантажився: "+up.error.message);
+      else{
+        const at=await sb.rpc("set_expense_attachment",{p_id:expenseId,p_path:path});
+        if(at.error)toast("Файл завантажено, але не прикріплено: "+at.error.message);
+      }
+    }
+  }
+  btn.disabled=false;btn.textContent="Зберегти";closeModal("expenseModal");await refreshAll();toast(id?"Витрату оновлено":"Витрату створено");
+  openDetail(expenseId);
+}
+async function openDetail(id){
+  currentDetail=id;const x=expenses.find(v=>v.id===id);if(!x)return;
+  document.getElementById("dTitle").textContent=x.counterparty;document.getElementById("dSub").textContent=x.description;
+  const creator=profiles[x.created_by]?.display_name||"—", approver=profiles[x.approved_by]?.display_name||"—";
+  let controls="";
+  if(profile.role==="owner"&&x.status==="submitted"){
+    controls=`<div class="approval"><div><textarea id="approveComment" placeholder="Коментар (необов'язково)"></textarea><button class="btn green" style="width:100%;margin-top:8px" onclick="approveCurrent()">✓ APPROVE</button></div>
+    <div><textarea id="rejectComment" placeholder="Причина відхилення"></textarea><button class="btn red" style="width:100%;margin-top:8px" onclick="rejectCurrent()">✕ REJECT</button></div></div>`;
+  }else if(profile.role==="accountant"&&["draft","rejected"].includes(x.status)){
+    controls=`<div class="actions" style="margin-top:18px"><button class="btn" onclick="openEdit('${x.id}')">Редагувати</button><button class="btn black" onclick="submitCurrent()">Відправити на погодження</button></div>`;
+  }else if(profile.role==="accountant"&&x.status==="approved"){
+    controls=`<button class="btn blue" style="width:100%;margin-top:18px" onclick="paidCurrent()">Позначити як оплачено</button>`;
+  }else if(x.status==="included"){controls=`<div class="locked" style="margin-top:18px">Витрату вже зафіксовано у місячному звіті.</div>`}
+  const logs=auditLogs.filter(l=>l.expense_id===x.id).map(l=>`<div class="event"><div class="dot"></div><div><b>${esc(profiles[l.actor_id]?.display_name||"User")}</b> · ${ACTION_LABELS[l.action]||esc(l.action)}
+    <div class="sub">${new Date(l.created_at).toLocaleString("uk-UA")}${l.note?" · "+esc(l.note):""}</div></div></div>`).join("");
+  document.getElementById("detailContent").innerHTML=`<div class="detailgrid">
+    <div class="card" style="margin:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>${money(x.amount,x.currency)}</h2>${statusBadge(x.status)}</div>
+      <div class="kv"><div>Дата</div><div><b>${x.expense_date}</b></div><div>Кому</div><div><b>${personLabel(x.expense_person||"petro")}</b></div><div>Компанія</div><div><b>${esc(x.entity)}</b></div><div>Категорія</div><div><b>${esc(x.category)}</b></div>
+      <div>Оплата</div><div><b>${esc(x.payment_method||"—")}</b></div><div>Створив</div><div><b>${esc(creator)}</b></div><div>Документ</div><div>${x.attachment_path?`<span class="link" onclick="openDocument('${esc(x.attachment_path)}')">Відкрити</span>`:"—"}</div>
+      ${x.owner_comment?`<div>Коментар</div><div><b>${esc(x.owner_comment)}</b></div>`:""}${x.approved_at?`<div>Approved</div><div><b>${esc(approver)} · ${new Date(x.approved_at).toLocaleString("uk-UA")}</b></div>`:""}</div>${controls}
+    </div><div class="card" style="margin:0"><h2>Audit trail</h2><div class="timeline">${logs||'<div class="muted">Немає подій.</div>'}</div></div></div>`;
+  openModal("detailModal");
+}
+async function callRpc(name,args,success){
+  const r=await sb.rpc(name,args);if(r.error){toast(r.error.message);return false}await refreshAll();if(currentDetail)openDetail(currentDetail);toast(success);return true;
+}
+async function submitCurrent(){await callRpc("submit_expense",{p_id:currentDetail},"Відправлено на погодження")}
+async function approveCurrent(){await callRpc("approve_expense",{p_id:currentDetail,p_comment:document.getElementById("approveComment").value.trim()||null},"Витрату затверджено")}
+async function rejectCurrent(){const note=document.getElementById("rejectComment").value.trim();if(!note){toast("Вкажи причину відхилення");return}await callRpc("reject_expense",{p_id:currentDetail,p_comment:note},"Витрату відхилено")}
+async function paidCurrent(){await callRpc("mark_expense_paid",{p_id:currentDetail},"Позначено як оплачено")}
+async function openDocument(path){
+  const r=await sb.storage.from("expense-documents").createSignedUrl(path,90);if(r.error){toast(r.error.message);return}window.open(r.data.signedUrl,"_blank");
+}
+function renderReport(){
+  const m=document.getElementById("reportMonth").value, eligible=personFiltered(expenses).filter(x=>x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
+  const cats={};eligible.forEach(x=>{const k=x.category+"|"+x.currency;cats[k]=(cats[k]||0)+Number(x.amount)});
+  document.getElementById("categoryTotals").innerHTML=Object.entries(cats).length?Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{const [cat,c]=k.split("|");return `<div class="rowline"><span>${esc(cat)}</span><b>${money(v,c)}</b></div>`}).join(""):'<div class="muted">Ще немає approved витрат.</div>';
+  document.getElementById("excludedTotals").innerHTML=["draft","submitted","rejected"].map(s=>{const arr=personFiltered(expenses).filter(x=>x.expense_date.startsWith(m)&&x.status===s),by={};arr.forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
+    return `<h3>${STATUS_LABELS[s]} · ${arr.length}</h3>${Object.entries(by).map(([c,v])=>`<div class="rowline"><span>${arr.filter(x=>x.currency===c).length} витрат</span><b>${money(v,c)}</b></div>`).join("")||'<div class="muted small">0</div>'}`}).join("");
+  document.getElementById("reportRows").innerHTML=eligible.length?eligible.map(x=>`<tr><td>${x.expense_date}</td><td><b>${personLabel(x.expense_person||"petro")}</b></td><td>${esc(x.category)}</td><td><span class="link" onclick="openDetail('${x.id}')">${esc(x.counterparty)}</span></td><td>${esc(x.entity)}</td><td class="right"><b>${money(x.amount,x.currency)}</b></td><td>${statusBadge(x.status)}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">Немає approved витрат.</td></tr>`;
+}
+async function finalizeMonth(){
+  if(profile.role!=="owner"){toast("Тільки власник може зафіксувати місяць");return}const m=document.getElementById("reportMonth").value;
+  if(!confirm(`Зафіксувати всі Approved/Paid витрати за ${m}? Фіксація застосовується до всіх витрат місяця.`))return;
+  await callRpc("finalize_month",{p_month:m},`Місяць ${m} зафіксовано`);
+}
+function renderAll(){
+  const suffix=currentPerson==="petro"?"Петро":currentPerson==="alina"?"Аліна":"Спільні";
+  const sub=document.getElementById("pageSub");
+  if(sub && document.getElementById("expensesSection").style.display!=="none"){
+    sub.textContent=`Зріз: ${suffix} · спільна база · approval власника · audit trail.`;
+  }
+  renderExpenses();renderReport();
+}
+boot();
+</script>
+</body>
+</html>
