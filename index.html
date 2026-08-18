@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="COOSH Finance"/>
   <link rel="manifest" href="./manifest.webmanifest"/>
   <link rel="icon" href="./icon.svg" type="image/svg+xml"/>
-  <title>COOSH Finance Control · Cloud V4.3</title>
+  <title>COOSH Finance Control · Cloud V4.4</title>
   <script>
 /* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
    No CDN dependency. */
@@ -119,41 +119,55 @@
 </script>
   <style>
     :root{
-      --bg:#f5f6f8;--card:#fff;--text:#121212;--muted:#70757e;--line:#e3e6ea;
-      --green:#0b9966;--green-bg:#e8f8f1;--yellow:#9b6500;--yellow-bg:#fff3d2;
-      --red:#bb3e49;--red-bg:#ffedf0;--blue:#2458ff;--blue-bg:#eef2ff;--black:#111;
+      --bg:#f6f7f9;--card:#fff;--text:#111214;--muted:#7b8088;--line:#e7e9ed;
+      --green:#14965f;--green-bg:#effaf4;--yellow:#d78b00;--yellow-bg:#fff8e8;
+      --red:#e44747;--red-bg:#fff2f2;--blue:#2d73e8;--blue-bg:#f1f6ff;--black:#111214;
+      --shadow:0 7px 24px rgba(16,24,40,.055);
     }
-    *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
     button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}
-    .top{min-height:70px;background:#0d0e10;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 22px;position:sticky;top:0;z-index:20}
-    .brand{font-weight:850;font-size:17px;line-height:1.15}.brand:before{content:"";display:inline-block;width:10px;height:10px;background:#54dfa6;border-radius:50%;margin-right:8px}.monthnav{display:flex;align-items:center;gap:5px}.monthnav input{max-width:132px;text-align:center;padding:7px 8px;font-size:12px}.monthnav .btn{min-width:32px;padding:6px 8px}.compact-monthnav .btn{padding:5px 8px;font-size:11px;min-width:28px}.compact-monthnav input{max-width:120px;padding:5px 6px;font-size:11px;border-radius:8px}.table-amount{font-size:15px;font-weight:850}.mobile-meta{display:none}.expense-top-summary{margin-bottom:14px}.mini-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mini-card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}.mini-card h3{margin:0 0 8px;font-size:13px}.mini-card .summary-line{padding:5px 0}.hidden-filter-month{display:none !important}.details-toggle summary{cursor:pointer;font-size:12px;font-weight:800;color:#2458ff;list-style:none}.details-toggle summary::-webkit-details-marker{display:none}.details-body{margin-top:8px;display:grid;gap:6px}.details-body .row{display:flex;justify-content:space-between;gap:10px;font-size:12px}.details-body .row span{color:var(--muted)}
-    .top-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.userline{font-size:12px;color:#c8ccd3}.container{max-width:1240px;margin:auto;padding:28px}
-    h1{margin:0;font-size:30px}h2{font-size:19px}h3{font-size:14px}.muted{color:var(--muted)}.small{font-size:12px}
-    .pagehead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:5px 0 22px}.actions,.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-    .btn{border:1px solid #cfd4dc;background:#fff;border-radius:10px;padding:10px 14px;font-weight:800}.btn.black{background:#111;color:#fff;border-color:#111}
-    .btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
-    .btn.compact{padding:8px 11px;font-size:13px;line-height:1.1}.btn:disabled{opacity:.5;cursor:not-allowed}.person-tab.active{background:#111;color:#fff;border-color:#111}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.025);margin-bottom:18px}
-    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px 12px;cursor:pointer;min-height:120px;display:flex;flex-direction:column;justify-content:space-between}
-    .stat span{font-size:13px;font-weight:800;line-height:1.15}.stat strong{font-size:28px;display:block;margin:6px 0 4px}.stat small{font-size:11px;line-height:1.2;color:var(--muted)}.stat.pending{background:var(--yellow-bg)}.stat.approved{background:var(--green-bg)}.stat.rejected{background:var(--red-bg)}
-    .monthly-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.summary-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fafbfc}.summary-card h3{margin:0 0 10px;font-size:15px}.summary-lines{display:grid;gap:8px}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.summary-line:last-child{border-bottom:0;padding-bottom:0}.summary-line span{color:var(--muted)}.summary-line b{white-space:nowrap}
-    .tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:13px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#767c86}.right{text-align:right}.sub{font-size:12px;color:var(--muted);margin-top:4px}.link{color:#2458ff;font-weight:750;cursor:pointer}
-    .badge{display:inline-block;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:850;background:#f1f2f4}.badge.submitted{background:var(--yellow-bg);color:var(--yellow)}
-    .badge.approved,.badge.paid,.badge.included{background:var(--green-bg);color:var(--green)}.badge.rejected{background:var(--red-bg);color:var(--red)}.badge.draft{color:#636872}
-    input,select,textarea{width:100%;border:1px solid #d5dae2;border-radius:10px;padding:10px;background:#fff}textarea{min-height:88px;resize:vertical}
-    label{font-size:12px;font-weight:800;display:flex;flex-direction:column;gap:7px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.span2{grid-column:span 2}
-    .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.47);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal{background:#fff;border-radius:18px;max-width:770px;width:100%;max-height:92vh;overflow:auto;padding:22px}
-    .modal.wide{max-width:1020px}.modalhead{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.x{width:34px;height:34px;border:0;border-radius:9px;background:#f0f2f4;font-size:20px}
-    .detailgrid,.reportgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.kv{display:grid;grid-template-columns:145px 1fr;gap:10px 12px}.kv div:nth-child(odd){color:var(--muted)}
-    .approval{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.timeline{display:flex;flex-direction:column;gap:14px}.event{display:flex;gap:10px}.dot{width:9px;height:9px;background:#111;border-radius:50%;margin-top:5px;flex:none}
-    .notice{padding:13px 15px;background:var(--green-bg);border-radius:11px;margin-bottom:16px}.warning{background:var(--yellow-bg)}.rowline{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid var(--line)}
-    .authwrap,.setupwrap{min-height:82vh;display:grid;place-items:center}.authcard,.setupcard{width:min(470px,95vw);background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 14px 45px rgba(0,0,0,.08)}
-    .logo{width:48px;height:48px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}.stack{display:flex;flex-direction:column;gap:14px;margin-top:20px}
-    .error{background:var(--red-bg);color:#922d36;padding:11px 13px;border-radius:10px;margin-top:12px;display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:80}
-    .empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}
-    .cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}
+
+    /* Header */
+    .top{min-height:74px;background:linear-gradient(135deg,#0d0e10,#17191d);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 22px;position:sticky;top:0;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+    .brand{font-weight:850;font-size:17px;line-height:1.1;white-space:nowrap}.brand:before{content:"";display:inline-block;width:9px;height:9px;background:#57dca8;border-radius:50%;margin-right:8px}.brand-long{font-weight:550;color:#f0f1f3}
+    .top-right{display:flex;gap:7px;align-items:center;justify-content:flex-end;min-width:0}.userline{display:none}
+    .top-control{height:38px;border:1px solid #42464d;background:#181a1e;color:#fff;border-radius:10px;padding:0 12px;font-weight:750;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;position:relative;white-space:nowrap}
+    .top-control:hover{background:#202328}.top-control.bell{width:40px;padding:0;font-size:16px}.top-control.exit{padding:0 12px}.top-control .push-dot{display:none;position:absolute;right:7px;top:7px;width:6px;height:6px;border-radius:50%;background:#ffb000;box-shadow:0 0 0 2px #181a1e}.top-control.push-on .push-dot{display:block}
+    .top-month{position:relative;overflow:hidden}.top-month input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.top-month-label{pointer-events:none}
+
+    .container{max-width:1120px;margin:auto;padding:28px}
+    h1{margin:0;font-size:34px;letter-spacing:-.025em}h2{font-size:19px}h3{font-size:14px}.muted{color:var(--muted)}.small{font-size:12px}
+    .pagehead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:5px 0 18px}.actions,.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    #pageSub{display:none}
+
+    /* Buttons */
+    .btn{border:1px solid #d5d9df;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;color:#1a1c20}.btn.black{background:#111214;color:#fff;border-color:#111214}.btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}.btn.compact{padding:7px 10px;font-size:12px;line-height:1.1}.btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Person segmented control */
+    .person-switch{display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:4px;background:#eceef1;border-radius:14px;margin-bottom:18px}.person-tab{border:0!important;background:transparent!important;color:#73777f!important;border-radius:10px!important;padding:10px 12px!important;box-shadow:none!important}.person-tab.active{background:#fff!important;color:#111!important;box-shadow:0 1px 5px rgba(0,0,0,.08)!important}
+
+    /* Summary cards */
+    .expense-top-summary{margin-bottom:14px;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}.summary-heading{display:none}.mini-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mini-summary.three{grid-template-columns:repeat(3,minmax(0,1fr))}.mini-card{border:1px solid #e0e3e8;border-radius:15px;padding:14px 16px;background:#fff;box-shadow:0 3px 12px rgba(16,24,40,.025)}.mini-card h3{margin:0 0 10px;font-size:15px}.summary-lines{display:grid;gap:0}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border:0}.summary-line span{color:#777d86}.summary-line b{white-space:nowrap;font-size:13px}.monthly-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.summary-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fafbfc}.summary-card h3{margin:0 0 10px;font-size:15px}
+
+    /* Status squares */
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 11px;cursor:pointer;min-height:105px;display:flex;flex-direction:column;justify-content:flex-end;transition:.15s ease}.stat:hover{transform:translateY(-1px)}.stat span{font-size:12px;font-weight:750;line-height:1.15}.stat strong{font-size:25px;display:block;margin:6px 0 3px}.stat small{font-size:10px;line-height:1.2;color:var(--muted)}.stat.pending{background:var(--yellow-bg);border-color:#f2d696}.stat.approved{background:var(--green-bg);border-color:#bfe7d2}.stat.paid{background:var(--blue-bg);border-color:#c9dcff}.stat.rejected{background:var(--red-bg);border-color:#ffcaca}.stat.selected{outline:2px solid #111;outline-offset:2px}
+
+    /* Expense list */
+    .list-card{background:transparent;border:0;padding:0;box-shadow:none;margin:0}.list-tools{display:none}.expense-list{display:flex;flex-direction:column;gap:10px}.expense-card{background:#fff;border:1px solid #e1e4e8;border-radius:15px;box-shadow:var(--shadow);overflow:hidden}.expense-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 14px}.expense-left{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;min-width:0}.expense-icon{width:46px;height:46px;border-radius:11px;border:1px solid #e4e6ea;background:#fafbfc;display:grid;place-items:center;font-size:18px;font-weight:900;color:#111}.expense-amount{font-size:19px;font-weight:900;letter-spacing:-.02em;line-height:1.05}.expense-amount .currency{font-size:12px;font-weight:650;color:#797f88;margin-left:4px}.expense-counterparty{font-weight:800;font-size:14px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-desc{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px}.quick-approve{border:0;background:#111214;color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:850;white-space:nowrap}.quick-approve:disabled{opacity:.55}.badge{display:inline-block;padding:5px 8px;border-radius:8px;font-size:11px;font-weight:850;background:#f1f2f4;white-space:nowrap}.badge.submitted{background:var(--yellow-bg);color:var(--yellow);border:1px solid #f1c45e}.badge.approved,.badge.paid,.badge.included{background:var(--green-bg);color:var(--green);border:1px solid #bde6cf}.badge.rejected{background:var(--red-bg);color:var(--red);border:1px solid #ffc6c6}.badge.draft{color:#636872;border:1px solid #dde0e5}
+    .details-toggle{border-top:1px solid #eceef1}.details-toggle summary{cursor:pointer;font-size:12px;font-weight:800;color:#2d3138;list-style:none;padding:9px 14px;display:flex;align-items:center;justify-content:space-between}.details-toggle summary::-webkit-details-marker{display:none}.details-toggle summary:after{content:"⌄";font-size:16px;color:#777}.details-toggle[open] summary:after{content:"⌃"}.details-body{padding:0 14px 12px;display:grid;gap:6px}.details-body .row{display:flex;justify-content:space-between;gap:10px;font-size:12px}.details-body .row span:first-child{color:var(--muted)}
+
+    /* General cards / forms / tables */
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.025);margin-bottom:18px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:13px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#767c86}.right{text-align:right}.sub{font-size:12px;color:var(--muted);margin-top:4px}.link{color:#2458ff;font-weight:750;cursor:pointer}
+    input,select,textarea{width:100%;border:1px solid #d5dae2;border-radius:10px;padding:10px;background:#fff}textarea{min-height:88px;resize:vertical}label{font-size:12px;font-weight:800;display:flex;flex-direction:column;gap:7px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.span2{grid-column:span 2}
+    .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.47);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal{background:#fff;border-radius:18px;max-width:770px;width:100%;max-height:92vh;overflow:auto;padding:22px}.modal.wide{max-width:1020px}.modalhead{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.x{width:34px;height:34px;border:0;border-radius:9px;background:#f0f2f4;font-size:20px}.detailgrid,.reportgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.kv{display:grid;grid-template-columns:145px 1fr;gap:10px 12px}.kv div:nth-child(odd){color:var(--muted)}.approval{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.timeline{display:flex;flex-direction:column;gap:14px}.event{display:flex;gap:10px}.dot{width:9px;height:9px;background:#111;border-radius:50%;margin-top:5px;flex:none}.notice{padding:13px 15px;background:var(--green-bg);border-radius:11px;margin-bottom:16px}.warning{background:var(--yellow-bg)}.rowline{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid var(--line)}
+    .authwrap,.setupwrap{min-height:82vh;display:grid;place-items:center}.authcard,.setupcard{width:min(470px,95vw);background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 14px 45px rgba(0,0,0,.08)}.logo{width:48px;height:48px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}.stack{display:flex;flex-direction:column;gap:14px;margin-top:20px}.error{background:var(--red-bg);color:#922d36;padding:11px 13px;border-radius:10px;margin-top:12px;display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:80}.empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}.cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}.hidden-filter-month{display:none!important}
+
     @media(max-width:900px){.detailgrid,.reportgrid,.monthly-summary{grid-template-columns:1fr}.userline{display:none}}
-    @media(max-width:650px){.container{padding:14px}.top{padding:10px 14px;min-height:64px;align-items:flex-start;flex-direction:column}.brand{font-size:15px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.stat{padding:8px 6px;min-height:82px;aspect-ratio:1/1;border-radius:12px}.stat span{font-size:10px}.stat strong{font-size:18px;margin:4px 0 2px}.stat small{display:none}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.pagehead{flex-direction:column;gap:10px}.approval{grid-template-columns:1fr}.top .cloud{display:none}.actions{width:100%}.pagehead .actions .btn{flex:1 1 calc(50% - 6px);padding:8px 9px;font-size:12px}.pagehead .actions .btn.black{flex-basis:100%}.filters{gap:8px}.person-tab{flex:1 1 31%;min-width:0;padding:8px 6px;font-size:12px}.btn{padding:8px 10px;font-size:12px}.btn.compact{padding:6px 8px;font-size:11px}.top-right{gap:8px;width:100%;justify-content:space-between}.top-right #notifyBtn,.top-right .btn.compact:last-child{flex:0 0 auto}.compact-monthnav{width:auto}.monthly-summary{grid-template-columns:1fr;gap:10px}.mini-summary{grid-template-columns:1fr;gap:8px}.tablewrap{overflow:visible}table.mobile-cards thead{display:none}table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tr,table.mobile-cards td{display:block;width:100%}table.mobile-cards tr{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:8px 10px}table.mobile-cards td{padding:4px 0;border-bottom:none;text-align:left !important}table.mobile-cards td::before{display:none}table.mobile-cards td.primary{padding-top:0}.table-amount{font-size:17px}.mobile-meta{display:block;font-size:12px;color:var(--muted);margin-top:3px}.details-toggle{margin-top:4px}.details-body{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:6px}}
+    @media(max-width:650px){
+      .top{min-height:64px;padding:10px 12px;gap:7px}.brand{font-size:15px}.brand-long,.cloud{display:none}.top-right{gap:5px;flex:1;justify-content:flex-end}.top-control{height:36px;font-size:11px;padding:0 9px;border-radius:9px}.top-control.bell{width:36px}.top-control.exit{padding:0 9px}.container{padding:18px 12px 28px}h1{font-size:34px}.pagehead{margin:0 0 16px;align-items:center}.pagehead .actions{width:auto;margin-left:auto}.pagehead .actions .btn{padding:7px 9px;font-size:11px}.pagehead .actions .btn:first-child{display:none}.person-switch{margin-bottom:16px}.person-tab{padding:9px 6px!important;font-size:12px}.mini-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mini-summary.three{grid-template-columns:1fr}.mini-card{padding:12px}.mini-card h3{font-size:14px}.summary-line{padding:4px 0}.summary-line b{font-size:12px}.stats{gap:7px;margin-bottom:16px}.stat{padding:8px 7px;min-height:86px;border-radius:12px}.stat span{font-size:9.5px}.stat strong{font-size:21px;margin:5px 0 2px}.stat small{display:none}.expense-list{gap:8px}.expense-main{padding:10px}.expense-left{grid-template-columns:40px minmax(0,1fr);gap:10px}.expense-icon{width:40px;height:40px;border-radius:10px;font-size:16px}.expense-amount{font-size:17px}.expense-counterparty{font-size:13px;margin-top:4px}.expense-desc{font-size:11px}.expense-actions{gap:5px}.quick-approve{padding:7px 9px;font-size:11px}.badge{font-size:10px;padding:4px 6px}.details-toggle summary{padding:8px 10px;font-size:11px}.details-body{padding:0 10px 10px}.btn{padding:8px 10px;font-size:12px}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.approval{grid-template-columns:1fr}.monthly-summary{grid-template-columns:1fr}.modal{padding:16px}
+    }
+    @media(max-width:390px){.top-control{padding:0 7px}.top-month-label{max-width:84px;overflow:hidden;text-overflow:ellipsis}.top-control.exit{padding:0 8px}.brand{font-size:14px}.stat span{font-size:9px}.expense-main{grid-template-columns:minmax(0,1fr) auto}.quick-approve{padding:7px 8px}}
   </style>
 </head>
 <body>
@@ -207,45 +221,54 @@
 
 <div id="appView" style="display:none">
   <header class="top">
-    <div class="brand">COOSH Finance Control <span class="cloud">CLOUD</span></div>
-    <div class="top-right"><button class="btn compact" id="notifyBtn" style="display:none" onclick="togglePushNotifications()">🔔 Увімкнути</button><span class="userline" id="userLine"></span><button class="btn compact" onclick="logout()">Вийти</button></div>
+    <div class="brand">COOSH <span class="brand-long">Finance Control</span> <span class="cloud">CLOUD</span></div>
+    <div class="top-right">
+      <label class="top-control top-month" title="Змінити місяць">
+        <span class="top-month-label" id="topMonthLabel">—</span><span>⌄</span>
+        <input type="month" id="topMonthPicker" onchange="setTopMonth(this.value)">
+      </label>
+      <button class="top-control bell" id="notifyBtn" style="display:none" onclick="togglePushNotifications()" aria-label="Сповіщення" title="Сповіщення">🔔<span class="push-dot"></span></button>
+      <span class="userline" id="userLine"></span>
+      <button class="top-control exit" onclick="logout()">Вийти</button>
+    </div>
   </header>
 
   <main class="container">
     <div class="pagehead">
-      <div><h1 id="pageTitle">Витрати</h1><div class="muted" id="pageSub">Спільна база · approval власника · audit trail.</div></div>
+      <div><h1 id="pageTitle">Витрати</h1><div id="pageSub"></div></div>
       <div class="actions">
-        <button class="btn" onclick="showSection('expenses')">Витрати</button>
-        <button class="btn" onclick="showSection('report')">Місячний звіт</button>
-        <button class="btn black" id="newExpenseBtn" onclick="openNew()">+ Нова витрата</button>
+        <button class="btn compact" onclick="showSection('expenses')">Витрати</button>
+        <button class="btn compact" onclick="showSection('report')">Звіт</button>
+        <button class="btn black compact" id="newExpenseBtn" onclick="openNew()">+ Витрата</button>
       </div>
     </div>
 
     <section id="expensesSection">
-      <div class="filters" style="margin-bottom:16px">
-        <button class="btn person-tab active" id="personPetro" onclick="setPerson('petro')">Витрати Петро</button>
-        <button class="btn person-tab" id="personAlina" onclick="setPerson('alina')">Витрати Аліни</button>
-        <button class="btn person-tab" id="personCombined" onclick="setPerson('combined')">Спільні</button>
+      <div class="person-switch">
+        <button class="btn person-tab active" id="personPetro" onclick="setPerson('petro')">Петро</button>
+        <button class="btn person-tab" id="personAlina" onclick="setPerson('alina')">Аліна</button>
+        <button class="btn person-tab" id="personCombined" onclick="setPerson('combined')">Разом</button>
       </div>
-      <div class="card expense-top-summary"><div class="pagehead" style="margin:0 0 10px"><div><h2 style="margin:0">Місячні суми</h2><div class="muted small">Показані тільки витрати типу «Оплата», без позик.</div></div></div><div class="mini-summary"><div class="mini-card"><h3>Петро</h3><div class="summary-lines" id="expenseMonthTotalsPetro"></div></div><div class="mini-card"><h3>Аліна</h3><div class="summary-lines" id="expenseMonthTotalsAlina"></div></div><div class="mini-card"><h3>Разом</h3><div class="summary-lines" id="expenseMonthTotalsCombined"></div></div></div></div><div class="stats">
-        <div class="stat pending" onclick="setStatusFilter('submitted')"><span>На погодженні</span><strong id="statPending">0</strong><small id="sumPending"></small></div>
-        <div class="stat approved" onclick="setStatusFilter('approved')"><span>Approved</span><strong id="statApproved">0</strong><small>можуть увійти у звіт</small></div>
-        <div class="stat" onclick="setStatusFilter('paid')"><span>Оплачено</span><strong id="statPaid">0</strong><small>тільки після approval</small></div>
-        <div class="stat rejected" onclick="setStatusFilter('rejected')"><span>Відхилено</span><strong id="statRejected">0</strong><small>не входять у звіт</small></div>
-      </div>
-      <div class="card">
-        <div class="filters">
-          <input type="month" id="monthFilter" class="hidden-filter-month" onchange="renderExpenses()">
-          <select id="statusFilter" style="max-width:210px" onchange="renderExpenses()">
-            <option value="">Усі статуси</option><option value="draft">Чернетка</option><option value="submitted">На погодженні</option>
-            <option value="approved">Затверджено</option><option value="rejected">Відхилено</option><option value="paid">Оплачено</option><option value="included">У звіті</option>
-          </select>
-          <button class="btn" onclick="refreshAll()">Оновити</button>
+
+      <div class="expense-top-summary">
+        <div class="mini-summary" id="expenseMiniSummary">
+          <div class="mini-card" id="expenseSummaryPetro"><h3>Петро</h3><div class="summary-lines" id="expenseMonthTotalsPetro"></div></div>
+          <div class="mini-card" id="expenseSummaryAlina"><h3>Аліна</h3><div class="summary-lines" id="expenseMonthTotalsAlina"></div></div>
+          <div class="mini-card" id="expenseSummaryCombined"><h3>Разом</h3><div class="summary-lines" id="expenseMonthTotalsCombined"></div></div>
         </div>
-        <div class="tablewrap"><table class="mobile-cards">
-          <thead><tr><th class="right">Сума</th><th>Витрата</th><th>Статус</th><th>Деталі</th></tr></thead>
-          <tbody id="expenseRows"></tbody>
-        </table></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat pending" id="statCardSubmitted" onclick="setStatusFilter('submitted')"><span>На погодженні</span><strong id="statPending">0</strong><small id="sumPending"></small></div>
+        <div class="stat approved" id="statCardApproved" onclick="setStatusFilter('approved')"><span>Погоджено</span><strong id="statApproved">0</strong><small>можуть увійти у звіт</small></div>
+        <div class="stat paid" id="statCardPaid" onclick="setStatusFilter('paid')"><span>Оплачено</span><strong id="statPaid">0</strong><small>тільки після approval</small></div>
+        <div class="stat rejected" id="statCardRejected" onclick="setStatusFilter('rejected')"><span>Відхилено</span><strong id="statRejected">0</strong><small>не входять у звіт</small></div>
+      </div>
+
+      <div class="list-card">
+        <input type="month" id="monthFilter" class="hidden-filter-month" onchange="renderExpenses()">
+        <input type="hidden" id="statusFilter" value="">
+        <div class="expense-list" id="expenseRows"></div>
       </div>
     </section>
 
@@ -338,11 +361,10 @@ function initClient(){const c=cfg();if(!c.url||!c.key)return false;sb=supabase.c
 function today(){return new Date().toISOString().slice(0,10)}
 function currentMonth(){return new Date().toISOString().slice(0,7)}
 function money(v,c){return new Intl.NumberFormat("uk-UA",{maximumFractionDigits:2}).format(Number(v)||0)+" "+c}
-function shiftMonth(inputId,delta){const el=document.getElementById(inputId); if(!el||!el.value)return; const [y,m]=el.value.split("-").map(Number); const d=new Date(y,m-1+delta,1); el.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; if(inputId==="monthFilter")renderExpenses(); if(inputId==="reportMonth")renderReport();}
-function getActiveMonthInputId(){return document.getElementById("expensesSection").style.display!=="none"?"monthFilter":"reportMonth"}
-function syncHeaderMonth(){const src=document.getElementById(getActiveMonthInputId()); const hdr=document.getElementById("headerMonth"); if(src&&hdr) hdr.value=src.value||currentMonth();}
-function applyHeaderMonth(){const hdr=document.getElementById("headerMonth"); const src=document.getElementById(getActiveMonthInputId()); if(hdr&&src){src.value=hdr.value; if(src.id==="monthFilter") renderExpenses(); else renderReport();}}
-function shiftActiveMonth(delta){syncHeaderMonth(); shiftMonth(getActiveMonthInputId(),delta); syncHeaderMonth();}
+function shiftMonth(inputId,delta){const el=document.getElementById(inputId);if(!el||!el.value)return;const [y,m]=el.value.split("-").map(Number);const d=new Date(y,m-1+delta,1);setTopMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`)}
+function formatMonthLabel(value){if(!value)return "—";const [y,m]=value.split("-").map(Number);return new Intl.DateTimeFormat("uk-UA",{month:"long",year:"numeric"}).format(new Date(y,m-1,1)).replace(/^./,c=>c.toUpperCase())}
+function setTopMonth(value){if(!value)return;const mf=document.getElementById("monthFilter"),rm=document.getElementById("reportMonth"),tp=document.getElementById("topMonthPicker"),lab=document.getElementById("topMonthLabel");if(mf)mf.value=value;if(rm)rm.value=value;if(tp&&tp.value!==value)tp.value=value;if(lab)lab.textContent=formatMonthLabel(value);renderExpenses();renderReport()}
+function syncTopMonth(){const mf=document.getElementById("monthFilter"),tp=document.getElementById("topMonthPicker"),lab=document.getElementById("topMonthLabel");const v=(mf&&mf.value)||currentMonth();if(tp)tp.value=v;if(lab)lab.textContent=formatMonthLabel(v)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",2400)}
 function statusBadge(s){return `<span class="badge ${s}">${STATUS_LABELS[s]||esc(s)}</span>`}
@@ -383,16 +405,13 @@ async function getCurrentPushSubscription(){
 async function refreshNotificationButton(){
   const btn=document.getElementById("notifyBtn");
   if(!btn||!profile||profile.role!=="owner"){if(btn)btn.style.display="none";return}
-  btn.style.display="inline-block";
-  if(!("Notification" in window)||!("serviceWorker" in navigator)){
-    btn.textContent="🔕 Push";btn.disabled=true;return;
-  }
+  btn.style.display="inline-flex";btn.disabled=false;
+  if(!("Notification" in window)||!("serviceWorker" in navigator)){btn.textContent="🔕";btn.title="Push недоступні";btn.disabled=true;return}
   const sub=await getCurrentPushSubscription().catch(()=>null);
-  if(Notification.permission==="granted"&&sub){
-    btn.textContent="🔕 Вимкнути";btn.disabled=false;
-  }else{
-    btn.textContent="🔔 Увімкнути";btn.disabled=false;
-  }
+  const on=Notification.permission==="granted"&&!!sub;
+  btn.innerHTML=`${on?"🔔":"🔕"}<span class="push-dot"></span>`;
+  btn.classList.toggle("push-on",on);
+  btn.title=on?"Вимкнути сповіщення":"Увімкнути сповіщення";
 }
 async function enablePushNotifications(){
   if(!profile||profile.role!=="owner") return;
@@ -460,6 +479,7 @@ async function boot(){
   await registerServiceWorker();
   document.getElementById("monthFilter").value=currentMonth();
   document.getElementById("reportMonth").value=currentMonth();
+  const topMonthPicker=document.getElementById("topMonthPicker");if(topMonthPicker)topMonthPicker.value=currentMonth();const topMonthLabel=document.getElementById("topMonthLabel");if(topMonthLabel)topMonthLabel.textContent=formatMonthLabel(currentMonth());
   showOnly("bootView");
 
   const ok=await waitForSupabase();
@@ -583,25 +603,49 @@ async function refreshAll(){
 }
 function showSection(s){
   const isExp=s==="expenses";document.getElementById("expensesSection").style.display=isExp?"block":"none";document.getElementById("reportSection").style.display=isExp?"none":"block";
-  document.getElementById("pageTitle").textContent=isExp?"Витрати":"Місячний звіт";document.getElementById("pageSub").textContent=isExp?"Спільна база · approval власника · audit trail.":"Тільки затверджені витрати.";
-  if(!isExp)renderReport();
+  document.getElementById("pageTitle").textContent=isExp?"Витрати":"Місячний звіт";syncTopMonth();
+  if(!isExp)renderReport();else renderExpenses();
 }
-function setStatusFilter(s){document.getElementById("statusFilter").value=s;renderExpenses()}
+function setStatusFilter(s){const el=document.getElementById("statusFilter");el.value=el.value===s?"":s;renderExpenses()}
 function renderStats(){
-  const scoped=personFiltered(expenses);
+  const m=document.getElementById("monthFilter").value;const scoped=personFiltered(expenses).filter(x=>!m||x.expense_date.startsWith(m));
   const cnt=s=>scoped.filter(x=>x.status===s).length;
   document.getElementById("statPending").textContent=cnt("submitted");document.getElementById("statApproved").textContent=cnt("approved");document.getElementById("statPaid").textContent=cnt("paid");document.getElementById("statRejected").textContent=cnt("rejected");
-  const by={};scoped.filter(x=>x.status==="submitted").forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
-  document.getElementById("sumPending").textContent=Object.entries(by).map(([c,v])=>money(v,c)).join(" · ")||"0";
+  const by={};scoped.filter(x=>x.status==="submitted").forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));document.getElementById("sumPending").textContent=Object.entries(by).map(([c,v])=>money(v,c)).join(" · ")||"0";
+  const selected=document.getElementById("statusFilter").value;[["submitted","statCardSubmitted"],["approved","statCardApproved"],["paid","statCardPaid"],["rejected","statCardRejected"]].forEach(([s,id])=>document.getElementById(id)?.classList.toggle("selected",selected===s));
 }
+function expenseIcon(x){const c=(x.category||"").toLowerCase();if(c.includes("marketing"))return "◎";if(c.includes("rent"))return "⌂";if(c.includes("logistics"))return "→";if(c.includes("software"))return "▣";if(c.includes("payroll"))return "₴";if(c.includes("tax"))return "%";if(c.includes("cogs"))return "C";return (x.counterparty||"•").trim().slice(0,1).toUpperCase()}
+function canQuickApprove(x){return !!(profile&&profile.role==="owner"&&x.status==="submitted"&&(profile.approval_person||"petro")===(x.expense_person||"petro"))}
+async function quickApprove(id,btn){if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>'}const r=await sb.rpc("approve_expense",{p_id:id,p_comment:null});if(r.error){toast(r.error.message);if(btn){btn.disabled=false;btn.textContent="✓ Погодити"}return}toast("Витрату погоджено");await refreshAll()}
+function updateSummaryVisibility(){const p=document.getElementById("expenseSummaryPetro"),a=document.getElementById("expenseSummaryAlina"),c=document.getElementById("expenseSummaryCombined"),wrap=document.getElementById("expenseMiniSummary");if(!p||!a||!c||!wrap)return;p.style.display=currentPerson==="alina"?"none":"block";a.style.display=currentPerson==="petro"?"none":"block";c.style.display="block";wrap.classList.toggle("three",currentPerson==="combined")}
 function renderExpenses(){
-  const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;syncHeaderMonth();renderMonthlySummary(m);renderStats();
+  const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;syncTopMonth();renderMonthlySummary(m);updateSummaryVisibility();renderStats();
   const rows=personFiltered(expenses).filter(x=>(!m||x.expense_date.startsWith(m))&&(!s||x.status===s));
-  document.getElementById("expenseRows").innerHTML=rows.length?rows.map(x=>`<tr>
-    <td class="right primary" data-label="Сума"><div class="table-amount">${money(x.amount,x.currency)}</div></td>
-    <td class="primary" data-label="Витрата"><b>${esc(x.counterparty)}</b><div class="sub">${esc(x.description)}</div></td>
-    <td data-label="Статус">${statusBadge(x.status)}</td>
-    <td data-label="Деталі"><details class="details-toggle"><summary>Деталі</summary><div class="details-body"><div class="row"><span>Дата</span><b>${x.expense_date}</b></div><div class="row"><span>Кому</span><b>${personLabel(x.expense_person||"petro")}</b></div><div class="row"><span>Тип</span><b>${requestKindLabel(x.request_kind)}</b></div><div class="row"><span>Категорія</span><b>${esc(x.category)}</b></div><div class="row"><span>Компанія</span><b>${esc(x.entity)}</b></div><div class="row"><span>Дія</span><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></div></div></details></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Немає записів.</td></tr>`;
+  const host=document.getElementById("expenseRows");
+  host.innerHTML=rows.length?rows.map(x=>`<div class="expense-card">
+    <div class="expense-main">
+      <div class="expense-left">
+        <div class="expense-icon">${esc(expenseIcon(x))}</div>
+        <div style="min-width:0">
+          <div class="expense-amount">${new Intl.NumberFormat("uk-UA",{maximumFractionDigits:2}).format(Number(x.amount)||0)}<span class="currency">${esc(x.currency)}</span></div>
+          <div class="expense-counterparty">${esc(x.counterparty)}</div>
+          <div class="expense-desc">${esc(x.description)}</div>
+        </div>
+      </div>
+      <div class="expense-actions">
+        ${statusBadge(x.status)}
+        ${canQuickApprove(x)?`<button class="quick-approve" onclick="quickApprove('${x.id}',this)">✓ Погодити</button>`:""}
+      </div>
+    </div>
+    <details class="details-toggle"><summary>Деталі</summary><div class="details-body">
+      <div class="row"><span>Дата</span><b>${x.expense_date}</b></div>
+      <div class="row"><span>Кому</span><b>${personLabel(x.expense_person||"petro")}</b></div>
+      <div class="row"><span>Тип</span><b>${requestKindLabel(x.request_kind)}</b></div>
+      <div class="row"><span>Категорія</span><b>${esc(x.category)}</b></div>
+      <div class="row"><span>Компанія</span><b>${esc(x.entity)}</b></div>
+      <div class="row"><span>Дія</span><span class="link" onclick="openDetail('${x.id}')">Відкрити повністю →</span></div>
+    </div></details>
+  </div>`).join(""):`<div class="card empty">Немає записів за цей місяць.</div>`;
 }
 function openNew(){
   if(profile.role!=="accountant"){toast("Нові витрати створює бухгалтер");return}
@@ -702,10 +746,7 @@ async function finalizeMonth(){
   if(!confirm(`Зафіксувати всі Approved/Paid витрати за ${m}? Фіксація застосовується до всіх витрат місяця.`))return;
   await callRpc("finalize_month",{p_month:m},`Місяць ${m} зафіксовано`);
 }
-function renderAll(){
-  syncHeaderMonth();
-  renderExpenses();renderReport();updateAppBadge();
-}
+function renderAll(){syncTopMonth();renderExpenses();renderReport();updateAppBadge()}
 boot();
 </script>
 </body>
