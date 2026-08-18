@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="COOSH Finance"/>
   <link rel="manifest" href="./manifest.webmanifest"/>
   <link rel="icon" href="./icon.svg" type="image/svg+xml"/>
-  <title>COOSH Finance Control · Cloud V4.2</title>
+  <title>COOSH Finance Control · Cloud V4.3</title>
   <script>
 /* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
    No CDN dependency. */
@@ -126,7 +126,7 @@
     *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
     button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}
     .top{min-height:70px;background:#0d0e10;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 22px;position:sticky;top:0;z-index:20}
-    .brand{font-weight:850;font-size:17px;line-height:1.15}.brand:before{content:"";display:inline-block;width:10px;height:10px;background:#54dfa6;border-radius:50%;margin-right:8px}.monthnav{display:flex;align-items:center;gap:6px}.monthnav input{max-width:150px;text-align:center}.monthnav .btn{min-width:38px;padding:8px 10px}.table-amount{font-size:15px;font-weight:850}.mobile-meta{display:none}
+    .brand{font-weight:850;font-size:17px;line-height:1.15}.brand:before{content:"";display:inline-block;width:10px;height:10px;background:#54dfa6;border-radius:50%;margin-right:8px}.monthnav{display:flex;align-items:center;gap:5px}.monthnav input{max-width:132px;text-align:center;padding:7px 8px;font-size:12px}.monthnav .btn{min-width:32px;padding:6px 8px}.compact-monthnav .btn{padding:5px 8px;font-size:11px;min-width:28px}.compact-monthnav input{max-width:120px;padding:5px 6px;font-size:11px;border-radius:8px}.table-amount{font-size:15px;font-weight:850}.mobile-meta{display:none}.expense-top-summary{margin-bottom:14px}.mini-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mini-card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}.mini-card h3{margin:0 0 8px;font-size:13px}.mini-card .summary-line{padding:5px 0}.hidden-filter-month{display:none !important}.details-toggle summary{cursor:pointer;font-size:12px;font-weight:800;color:#2458ff;list-style:none}.details-toggle summary::-webkit-details-marker{display:none}.details-body{margin-top:8px;display:grid;gap:6px}.details-body .row{display:flex;justify-content:space-between;gap:10px;font-size:12px}.details-body .row span{color:var(--muted)}
     .top-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.userline{font-size:12px;color:#c8ccd3}.container{max-width:1240px;margin:auto;padding:28px}
     h1{margin:0;font-size:30px}h2{font-size:19px}h3{font-size:14px}.muted{color:var(--muted)}.small{font-size:12px}
     .pagehead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:5px 0 22px}.actions,.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
@@ -153,7 +153,7 @@
     .empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}
     .cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}
     @media(max-width:900px){.detailgrid,.reportgrid,.monthly-summary{grid-template-columns:1fr}.userline{display:none}}
-    @media(max-width:650px){.container{padding:14px}.top{padding:10px 14px;min-height:64px;align-items:flex-start;flex-direction:column}.brand{font-size:15px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.stat{padding:10px 8px;min-height:90px;aspect-ratio:1/1;border-radius:12px}.stat span{font-size:10px}.stat strong{font-size:20px;margin:4px 0 2px}.stat small{display:none}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.pagehead{flex-direction:column;gap:12px}.approval{grid-template-columns:1fr}.top .cloud{display:none}.actions{width:100%}.pagehead .actions .btn{flex:1 1 calc(50% - 6px);padding:9px 10px;font-size:12px}.pagehead .actions .btn.black{flex-basis:100%}.filters{gap:8px}.person-tab{flex:1 1 31%;min-width:0;padding:8px 6px;font-size:12px}.btn{padding:9px 11px;font-size:12px}.btn.compact{padding:7px 9px;font-size:12px}.top-right{gap:8px;width:100%;justify-content:space-between}.top-right #notifyBtn,.top-right .btn.compact:last-child{flex:0 0 auto}.monthnav{width:100%}.monthnav input{max-width:none;flex:1 1 auto}.monthly-summary{grid-template-columns:1fr;gap:10px}.tablewrap{overflow:visible}table.mobile-cards thead{display:none}table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tr,table.mobile-cards td{display:block;width:100%}table.mobile-cards tr{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:10px 12px}table.mobile-cards td{padding:6px 0;border-bottom:1px dashed #e6e8ec;text-align:left !important}table.mobile-cards td:last-child{border-bottom:0;padding-bottom:0}table.mobile-cards td::before{content:attr(data-label);display:block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#7a818a;margin-bottom:3px}table.mobile-cards td.primary{padding-top:0}table.mobile-cards td.primary::before{display:none}.table-amount{font-size:18px}.mobile-meta{display:block;font-size:12px;color:var(--muted);margin-top:4px}}
+    @media(max-width:650px){.container{padding:14px}.top{padding:10px 14px;min-height:64px;align-items:flex-start;flex-direction:column}.brand{font-size:15px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.stat{padding:8px 6px;min-height:82px;aspect-ratio:1/1;border-radius:12px}.stat span{font-size:10px}.stat strong{font-size:18px;margin:4px 0 2px}.stat small{display:none}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.pagehead{flex-direction:column;gap:10px}.approval{grid-template-columns:1fr}.top .cloud{display:none}.actions{width:100%}.pagehead .actions .btn{flex:1 1 calc(50% - 6px);padding:8px 9px;font-size:12px}.pagehead .actions .btn.black{flex-basis:100%}.filters{gap:8px}.person-tab{flex:1 1 31%;min-width:0;padding:8px 6px;font-size:12px}.btn{padding:8px 10px;font-size:12px}.btn.compact{padding:6px 8px;font-size:11px}.top-right{gap:8px;width:100%;justify-content:space-between}.top-right #notifyBtn,.top-right .btn.compact:last-child{flex:0 0 auto}.compact-monthnav{width:auto}.monthly-summary{grid-template-columns:1fr;gap:10px}.mini-summary{grid-template-columns:1fr;gap:8px}.tablewrap{overflow:visible}table.mobile-cards thead{display:none}table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tr,table.mobile-cards td{display:block;width:100%}table.mobile-cards tr{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:8px 10px}table.mobile-cards td{padding:4px 0;border-bottom:none;text-align:left !important}table.mobile-cards td::before{display:none}table.mobile-cards td.primary{padding-top:0}.table-amount{font-size:17px}.mobile-meta{display:block;font-size:12px;color:var(--muted);margin-top:3px}.details-toggle{margin-top:4px}.details-body{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:6px}}
   </style>
 </head>
 <body>
@@ -208,7 +208,7 @@
 <div id="appView" style="display:none">
   <header class="top">
     <div class="brand">COOSH Finance Control <span class="cloud">CLOUD</span></div>
-    <div class="top-right"><button class="btn compact" id="notifyBtn" style="display:none" onclick="enablePushNotifications()">🔔 Увімкнути</button><span class="userline" id="userLine"></span><button class="btn compact" onclick="logout()">Вийти</button></div>
+    <div class="top-right"><button class="btn compact" id="notifyBtn" style="display:none" onclick="togglePushNotifications()">🔔 Увімкнути</button><span class="userline" id="userLine"></span><button class="btn compact" onclick="logout()">Вийти</button></div>
   </header>
 
   <main class="container">
@@ -227,7 +227,7 @@
         <button class="btn person-tab" id="personAlina" onclick="setPerson('alina')">Витрати Аліни</button>
         <button class="btn person-tab" id="personCombined" onclick="setPerson('combined')">Спільні</button>
       </div>
-      <div class="stats">
+      <div class="card expense-top-summary"><div class="pagehead" style="margin:0 0 10px"><div><h2 style="margin:0">Місячні суми</h2><div class="muted small">Показані тільки витрати типу «Оплата», без позик.</div></div></div><div class="mini-summary"><div class="mini-card"><h3>Петро</h3><div class="summary-lines" id="expenseMonthTotalsPetro"></div></div><div class="mini-card"><h3>Аліна</h3><div class="summary-lines" id="expenseMonthTotalsAlina"></div></div><div class="mini-card"><h3>Разом</h3><div class="summary-lines" id="expenseMonthTotalsCombined"></div></div></div></div><div class="stats">
         <div class="stat pending" onclick="setStatusFilter('submitted')"><span>На погодженні</span><strong id="statPending">0</strong><small id="sumPending"></small></div>
         <div class="stat approved" onclick="setStatusFilter('approved')"><span>Approved</span><strong id="statApproved">0</strong><small>можуть увійти у звіт</small></div>
         <div class="stat" onclick="setStatusFilter('paid')"><span>Оплачено</span><strong id="statPaid">0</strong><small>тільки після approval</small></div>
@@ -235,7 +235,7 @@
       </div>
       <div class="card">
         <div class="filters">
-          <div class="monthnav"><button class="btn compact" type="button" onclick="shiftMonth('monthFilter',-1)">←</button><input type="month" id="monthFilter" onchange="renderExpenses()"><button class="btn compact" type="button" onclick="shiftMonth('monthFilter',1)">→</button></div>
+          <input type="month" id="monthFilter" class="hidden-filter-month" onchange="renderExpenses()">
           <select id="statusFilter" style="max-width:210px" onchange="renderExpenses()">
             <option value="">Усі статуси</option><option value="draft">Чернетка</option><option value="submitted">На погодженні</option>
             <option value="approved">Затверджено</option><option value="rejected">Відхилено</option><option value="paid">Оплачено</option><option value="included">У звіті</option>
@@ -243,7 +243,7 @@
           <button class="btn" onclick="refreshAll()">Оновити</button>
         </div>
         <div class="tablewrap"><table class="mobile-cards">
-          <thead><tr><th class="right">Сума</th><th>Контрагент</th><th>Статус</th><th>Дата</th><th>Кому</th><th>Тип</th><th>Категорія</th><th>Компанія</th><th></th></tr></thead>
+          <thead><tr><th class="right">Сума</th><th>Витрата</th><th>Статус</th><th>Деталі</th></tr></thead>
           <tbody id="expenseRows"></tbody>
         </table></div>
       </div>
@@ -251,7 +251,7 @@
 
     <section id="reportSection" style="display:none">
       <div class="notice"><b>Контроль:</b> у місячний звіт автоматично допускаються тільки Approved / Paid / Included. Draft, Pending і Rejected виключені.</div>
-      <div class="filters" style="margin-bottom:16px"><div class="monthnav"><button class="btn compact" type="button" onclick="shiftMonth('reportMonth',-1)">←</button><input type="month" id="reportMonth" onchange="renderReport()"><button class="btn compact" type="button" onclick="shiftMonth('reportMonth',1)">→</button></div></div>
+      <div class="filters hidden-filter-month" style="margin-bottom:16px"><input type="month" id="reportMonth" onchange="renderReport()"></div>
       <div class="card">
         <div class="pagehead" style="margin:0 0 10px"><div><h2 style="margin:0">Загальна місячна сума витрат</h2><div class="muted small">Показані тільки витрати типу «Оплата», без позик.</div></div></div>
         <div class="monthly-summary">
@@ -267,7 +267,7 @@
       <div class="card">
         <div class="pagehead" style="margin:0 0 10px"><h2 style="margin:0">Деталізація</h2><button class="btn blue" id="finalizeBtn" onclick="finalizeMonth()">Зафіксувати місяць</button></div>
         <div class="tablewrap"><table class="mobile-cards">
-          <thead><tr><th class="right">Сума</th><th>Контрагент</th><th>Статус</th><th>Дата</th><th>Кому</th><th>Категорія</th><th>Компанія</th></tr></thead>
+          <thead><tr><th class="right">Сума</th><th>Витрата</th><th>Статус</th><th>Деталі</th></tr></thead>
           <tbody id="reportRows"></tbody>
         </table></div>
       </div>
@@ -339,6 +339,10 @@ function today(){return new Date().toISOString().slice(0,10)}
 function currentMonth(){return new Date().toISOString().slice(0,7)}
 function money(v,c){return new Intl.NumberFormat("uk-UA",{maximumFractionDigits:2}).format(Number(v)||0)+" "+c}
 function shiftMonth(inputId,delta){const el=document.getElementById(inputId); if(!el||!el.value)return; const [y,m]=el.value.split("-").map(Number); const d=new Date(y,m-1+delta,1); el.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; if(inputId==="monthFilter")renderExpenses(); if(inputId==="reportMonth")renderReport();}
+function getActiveMonthInputId(){return document.getElementById("expensesSection").style.display!=="none"?"monthFilter":"reportMonth"}
+function syncHeaderMonth(){const src=document.getElementById(getActiveMonthInputId()); const hdr=document.getElementById("headerMonth"); if(src&&hdr) hdr.value=src.value||currentMonth();}
+function applyHeaderMonth(){const hdr=document.getElementById("headerMonth"); const src=document.getElementById(getActiveMonthInputId()); if(hdr&&src){src.value=hdr.value; if(src.id==="monthFilter") renderExpenses(); else renderReport();}}
+function shiftActiveMonth(delta){syncHeaderMonth(); shiftMonth(getActiveMonthInputId(),delta); syncHeaderMonth();}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",2400)}
 function statusBadge(s){return `<span class="badge ${s}">${STATUS_LABELS[s]||esc(s)}</span>`}
@@ -371,15 +375,21 @@ async function registerServiceWorker(){
   if(!("serviceWorker" in navigator)) return null;
   try{return await navigator.serviceWorker.register("./sw.js")}catch(e){console.warn("SW registration failed",e);return null}
 }
+async function getCurrentPushSubscription(){
+  if(!("serviceWorker" in navigator)) return null;
+  const reg=await navigator.serviceWorker.ready;
+  return await reg.pushManager.getSubscription();
+}
 async function refreshNotificationButton(){
   const btn=document.getElementById("notifyBtn");
   if(!btn||!profile||profile.role!=="owner"){if(btn)btn.style.display="none";return}
   btn.style.display="inline-block";
   if(!("Notification" in window)||!("serviceWorker" in navigator)){
-    btn.textContent="🔕 Push недоступні";btn.disabled=true;return;
+    btn.textContent="🔕 Push";btn.disabled=true;return;
   }
-  if(Notification.permission==="granted"){
-    btn.textContent="🔔 Сповіщення";btn.disabled=false;
+  const sub=await getCurrentPushSubscription().catch(()=>null);
+  if(Notification.permission==="granted"&&sub){
+    btn.textContent="🔕 Вимкнути";btn.disabled=false;
   }else{
     btn.textContent="🔔 Увімкнути";btn.disabled=false;
   }
@@ -412,6 +422,25 @@ async function enablePushNotifications(){
   if(r.error){toast("Не вдалося зберегти push: "+r.error.message);return}
   toast("Push-сповіщення увімкнено");
   await refreshNotificationButton();
+}
+async function disablePushNotifications(){
+  if(!profile||profile.role!=="owner") return;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    if(sub){
+      const endpoint=sub.endpoint;
+      try{ await sub.unsubscribe(); }catch(e){}
+      try{ await sb.rpc("remove_push_subscription",{p_endpoint:endpoint}); }catch(e){}
+    }
+    toast("Push-сповіщення вимкнено");
+  }catch(e){toast("Не вдалося вимкнути push");}
+  await refreshNotificationButton();
+}
+async function togglePushNotifications(){
+  const sub=await getCurrentPushSubscription().catch(()=>null);
+  if(Notification.permission==="granted"&&sub) return await disablePushNotifications();
+  return await enablePushNotifications();
 }
 async function updateAppBadge(){
   if(!("setAppBadge" in navigator)||!profile||profile.role!=="owner") return;
@@ -566,18 +595,13 @@ function renderStats(){
   document.getElementById("sumPending").textContent=Object.entries(by).map(([c,v])=>money(v,c)).join(" · ")||"0";
 }
 function renderExpenses(){
-  renderStats();const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;
+  const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;syncHeaderMonth();renderMonthlySummary(m);renderStats();
   const rows=personFiltered(expenses).filter(x=>(!m||x.expense_date.startsWith(m))&&(!s||x.status===s));
   document.getElementById("expenseRows").innerHTML=rows.length?rows.map(x=>`<tr>
     <td class="right primary" data-label="Сума"><div class="table-amount">${money(x.amount,x.currency)}</div></td>
-    <td class="primary" data-label="Контрагент"><b>${esc(x.counterparty)}</b><div class="sub">${esc(x.description)}</div><div class="mobile-meta">${requestKindLabel(x.request_kind)} · ${esc(x.entity)}</div></td>
+    <td class="primary" data-label="Витрата"><b>${esc(x.counterparty)}</b><div class="sub">${esc(x.description)}</div></td>
     <td data-label="Статус">${statusBadge(x.status)}</td>
-    <td data-label="Дата">${x.expense_date}</td>
-    <td data-label="Кому"><b>${personLabel(x.expense_person||"petro")}</b></td>
-    <td data-label="Тип"><b>${requestKindLabel(x.request_kind)}</b></td>
-    <td data-label="Категорія">${esc(x.category)}</td>
-    <td data-label="Компанія">${esc(x.entity)}</td>
-    <td data-label="Дія"><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Немає записів.</td></tr>`;
+    <td data-label="Деталі"><details class="details-toggle"><summary>Деталі</summary><div class="details-body"><div class="row"><span>Дата</span><b>${x.expense_date}</b></div><div class="row"><span>Кому</span><b>${personLabel(x.expense_person||"petro")}</b></div><div class="row"><span>Тип</span><b>${requestKindLabel(x.request_kind)}</b></div><div class="row"><span>Категорія</span><b>${esc(x.category)}</b></div><div class="row"><span>Компанія</span><b>${esc(x.entity)}</b></div><div class="row"><span>Дія</span><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></div></div></details></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Немає записів.</td></tr>`;
 }
 function openNew(){
   if(profile.role!=="accountant"){toast("Нові витрати створює бухгалтер");return}
@@ -660,6 +684,10 @@ function renderMonthlySummary(month){
   document.getElementById("monthTotalsPetro").innerHTML=currencyBreakdown(petro);
   document.getElementById("monthTotalsAlina").innerHTML=currencyBreakdown(alina);
   document.getElementById("monthTotalsCombined").innerHTML=currencyBreakdown(eligible);
+  const ep=document.getElementById("expenseMonthTotalsPetro"), ea=document.getElementById("expenseMonthTotalsAlina"), ec=document.getElementById("expenseMonthTotalsCombined");
+  if(ep) ep.innerHTML=currencyBreakdown(petro);
+  if(ea) ea.innerHTML=currencyBreakdown(alina);
+  if(ec) ec.innerHTML=currencyBreakdown(eligible);
 }
 function renderReport(){
   const m=document.getElementById("reportMonth").value;renderMonthlySummary(m);const eligible=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
@@ -667,7 +695,7 @@ function renderReport(){
   document.getElementById("categoryTotals").innerHTML=Object.entries(cats).length?Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{const [cat,c]=k.split("|");return `<div class="rowline"><span>${esc(cat)}</span><b>${money(v,c)}</b></div>`}).join(""):'<div class="muted">Ще немає approved витрат.</div>';
   document.getElementById("excludedTotals").innerHTML=["draft","submitted","rejected"].map(s=>{const arr=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&x.status===s),by={};arr.forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
     return `<h3>${STATUS_LABELS[s]} · ${arr.length}</h3>${Object.entries(by).map(([c,v])=>`<div class="rowline"><span>${arr.filter(x=>x.currency===c).length} витрат</span><b>${money(v,c)}</b></div>`).join("")||'<div class="muted small">0</div>'}`}).join("");
-  document.getElementById("reportRows").innerHTML=eligible.length?eligible.map(x=>`<tr><td class="right primary" data-label="Сума"><div class="table-amount">${money(x.amount,x.currency)}</div></td><td class="primary" data-label="Контрагент"><span class="link" onclick="openDetail('${x.id}')">${esc(x.counterparty)}</span></td><td data-label="Статус">${statusBadge(x.status)}</td><td data-label="Дата">${x.expense_date}</td><td data-label="Кому"><b>${personLabel(x.expense_person||"petro")}</b></td><td data-label="Категорія">${esc(x.category)}</td><td data-label="Компанія">${esc(x.entity)}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">Немає approved витрат.</td></tr>`;
+  document.getElementById("reportRows").innerHTML=eligible.length?eligible.map(x=>`<tr><td class="right primary" data-label="Сума"><div class="table-amount">${money(x.amount,x.currency)}</div></td><td class="primary" data-label="Витрата"><span class="link" onclick="openDetail('${x.id}')">${esc(x.counterparty)}</span></td><td data-label="Статус">${statusBadge(x.status)}</td><td data-label="Деталі"><details class="details-toggle"><summary>Деталі</summary><div class="details-body"><div class="row"><span>Дата</span><b>${x.expense_date}</b></div><div class="row"><span>Кому</span><b>${personLabel(x.expense_person||"petro")}</b></div><div class="row"><span>Категорія</span><b>${esc(x.category)}</b></div><div class="row"><span>Компанія</span><b>${esc(x.entity)}</b></div><div class="row"><span>Дія</span><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></div></div></details></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Немає approved витрат.</td></tr>`;
 }
 async function finalizeMonth(){
   if(profile.role!=="owner"){toast("Тільки власник може зафіксувати місяць");return}const m=document.getElementById("reportMonth").value;
@@ -675,11 +703,7 @@ async function finalizeMonth(){
   await callRpc("finalize_month",{p_month:m},`Місяць ${m} зафіксовано`);
 }
 function renderAll(){
-  const suffix=currentPerson==="petro"?"Петро":currentPerson==="alina"?"Аліна":"Спільні";
-  const sub=document.getElementById("pageSub");
-  if(sub && document.getElementById("expensesSection").style.display!=="none"){
-    sub.textContent=`Зріз: ${suffix} · спільна база · approval власника · audit trail.`;
-  }
+  syncHeaderMonth();
   renderExpenses();renderReport();updateAppBadge();
 }
 boot();
