@@ -3,7 +3,13 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>COOSH Finance Control · Cloud V3.4</title>
+  <meta name="theme-color" content="#0d0e10"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="COOSH Finance"/>
+  <link rel="manifest" href="./manifest.webmanifest"/>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml"/>
+  <title>COOSH Finance Control · Cloud V4.0</title>
   <script>
 /* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
    No CDN dependency. */
@@ -201,7 +207,7 @@
 <div id="appView" style="display:none">
   <header class="top">
     <div class="brand">COOSH Finance Control <span class="cloud">CLOUD</span></div>
-    <div class="top-right"><span class="userline" id="userLine"></span><button class="btn" style="padding:8px 11px" onclick="logout()">Вийти</button></div>
+    <div class="top-right"><button class="btn" id="notifyBtn" style="padding:8px 11px;display:none" onclick="enablePushNotifications()">🔔 Увімкнути сповіщення</button><span class="userline" id="userLine"></span><button class="btn" style="padding:8px 11px" onclick="logout()">Вийти</button></div>
   </header>
 
   <main class="container">
@@ -236,7 +242,7 @@
           <button class="btn" onclick="refreshAll()">Оновити</button>
         </div>
         <div class="tablewrap"><table>
-          <thead><tr><th>Дата</th><th>Кому</th><th>Контрагент</th><th>Категорія</th><th>Компанія</th><th class="right">Сума</th><th>Статус</th><th></th></tr></thead>
+          <thead><tr><th>Дата</th><th>Кому</th><th>Тип</th><th>Контрагент</th><th>Категорія</th><th>Компанія</th><th class="right">Сума</th><th>Статус</th><th></th></tr></thead>
           <tbody id="expenseRows"></tbody>
         </table></div>
       </div>
@@ -266,10 +272,16 @@
     <form id="expenseForm" class="formgrid" onsubmit="saveExpense(event)">
       <input type="hidden" id="editId">
       <label>Дата<input type="date" id="fDate" required></label>
-      <label>Чиї витрати
+      <label>Кому на погодження
         <select id="fPerson">
           <option value="petro">Петро</option>
           <option value="alina">Аліна</option>
+        </select>
+      </label>
+      <label>Тип
+        <select id="fRequestKind">
+          <option value="payment">Оплата</option>
+          <option value="loan">Позика</option>
         </select>
       </label>
       <label>Компанія<select id="fEntity"><option>COOSH UA</option><option>COOSH Poland</option><option>COOSH US</option><option>COOSH Holding</option></select></label>
@@ -307,6 +319,8 @@ window.addEventListener("error", function(e){
   }
 });
 const STATUS_LABELS={draft:"Чернетка",submitted:"На погодженні",approved:"Затверджено",rejected:"Відхилено",paid:"Оплачено",included:"У звіті"};
+const REQUEST_KIND_LABELS={payment:"Оплата",loan:"Позика"};
+const VAPID_PUBLIC_KEY="BF-_mwC3SGLt_LePsOHlq3exVvzhdCECdWN_qQfM4RX0dixDGY8-IRngeaufTwFLFy5nHv57a2pfwXb_NPPOo98";
 const ACTION_LABELS={created:"Створено",updated:"Відредаговано",attachment_added:"Додано документ",submitted:"Відправлено на погодження",approved:"Затверджено",rejected:"Відхилено",paid:"Позначено як оплачено",included:"Включено у місячний звіт"};
 let sb=null, currentUser=null, profile=null, expenses=[], profiles={}, auditLogs=[], currentDetail=null, realtimeChannel=null, currentPerson="petro";
 
@@ -332,6 +346,68 @@ function personFiltered(list){
   if(currentPerson==="combined") return list;
   return list.filter(x=>(x.expense_person||"petro")===currentPerson);
 }
+
+function requestKindLabel(k){return REQUEST_KIND_LABELS[k||"payment"]||"Оплата"}
+function isStandaloneApp(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
+}
+function urlBase64ToUint8Array(base64String){
+  const padding="=".repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+  const rawData=atob(base64);
+  return Uint8Array.from([...rawData].map(c=>c.charCodeAt(0)));
+}
+async function registerServiceWorker(){
+  if(!("serviceWorker" in navigator)) return null;
+  try{return await navigator.serviceWorker.register("./sw.js")}catch(e){console.warn("SW registration failed",e);return null}
+}
+async function refreshNotificationButton(){
+  const btn=document.getElementById("notifyBtn");
+  if(!btn||!profile||profile.role!=="owner"){if(btn)btn.style.display="none";return}
+  btn.style.display="inline-block";
+  if(!("Notification" in window)||!("serviceWorker" in navigator)){
+    btn.textContent="🔕 Push недоступні";btn.disabled=true;return;
+  }
+  if(Notification.permission==="granted"){
+    btn.textContent="🔔 Сповіщення увімкнено";btn.disabled=false;
+  }else{
+    btn.textContent="🔔 Увімкнути сповіщення";btn.disabled=false;
+  }
+}
+async function enablePushNotifications(){
+  if(!profile||profile.role!=="owner") return;
+  if(!("Notification" in window)||!("serviceWorker" in navigator)){toast("Цей браузер не підтримує push");return}
+  const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isiOS&&!isStandaloneApp()){
+    toast("На iPhone спочатку додай COOSH Finance на екран «Початок», потім відкрий саме іконку");
+    return;
+  }
+  const permission=await Notification.requestPermission();
+  if(permission!=="granted"){toast("Дозвіл на сповіщення не надано");await refreshNotificationButton();return}
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub){
+    sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+  }
+  const j=sub.toJSON();
+  const r=await sb.rpc("save_push_subscription",{
+    p_endpoint:j.endpoint,
+    p_p256dh:j.keys?.p256dh||"",
+    p_auth:j.keys?.auth||"",
+    p_user_agent:navigator.userAgent
+  });
+  if(r.error){toast("Не вдалося зберегти push: "+r.error.message);return}
+  toast("Push-сповіщення увімкнено");
+  await refreshNotificationButton();
+}
+async function updateAppBadge(){
+  if(!("setAppBadge" in navigator)||!profile||profile.role!=="owner") return;
+  const mine=expenses.filter(x=>x.status==="submitted"&&(x.expense_person||"petro")===(profile.approval_person||"petro")).length;
+  try{if(mine>0)await navigator.setAppBadge(mine);else if("clearAppBadge" in navigator)await navigator.clearAppBadge()}catch(e){}
+}
 function openModal(id){document.getElementById(id).style.display="flex"}function closeModal(id){document.getElementById(id).style.display="none"}
 
 async function waitForSupabase(){
@@ -342,6 +418,7 @@ async function waitForSupabase(){
   return false;
 }
 async function boot(){
+  await registerServiceWorker();
   document.getElementById("monthFilter").value=currentMonth();
   document.getElementById("reportMonth").value=currentMonth();
   showOnly("bootView");
@@ -443,11 +520,13 @@ async function testConnection(){
 }
 async function logout(){if(realtimeChannel)clearInterval(realtimeChannel);await sb.auth.signOut();currentUser=null;profile=null;showOnly("authView")}
 async function loadApp(){
-  const {data:p,error}=await sb.from("profiles").select("user_id,display_name,email,role").eq("user_id",currentUser.id).single();
+  const {data:p,error}=await sb.from("profiles").select("user_id,display_name,email,role,approval_person").eq("user_id",currentUser.id).single();
   if(error||!p){showOnly("authView");alert("Для цього акаунта не призначена роль у таблиці profiles. Виконай 02_assign_users.sql.");return}
   profile=p;showOnly("appView");document.getElementById("userLine").textContent=`${p.display_name} · ${p.role==="owner"?"Власник":"Бухгалтер"}`;
   document.getElementById("newExpenseBtn").style.display=p.role==="accountant"?"inline-block":"none";document.getElementById("finalizeBtn").style.display=p.role==="owner"?"inline-block":"none";
-  await refreshAll();subscribeRealtime();
+  await refreshAll();await refreshNotificationButton();subscribeRealtime();
+  const deepId=new URLSearchParams(location.search).get("expense");
+  if(deepId && expenses.some(x=>x.id===deepId)) setTimeout(()=>openDetail(deepId),150);
 }
 function subscribeRealtime(){
   if(realtimeChannel)clearInterval(realtimeChannel);
@@ -456,7 +535,7 @@ function subscribeRealtime(){
 async function refreshAll(){
   const [ex,pr,al]=await Promise.all([
     sb.from("expenses").select("*").order("expense_date",{ascending:false}).order("created_at",{ascending:false}),
-    sb.from("profiles").select("user_id,display_name,email,role"),
+    sb.from("profiles").select("user_id,display_name,email,role,approval_person"),
     sb.from("audit_log").select("*").order("created_at",{ascending:false})
   ]);
   if(ex.error){toast(ex.error.message);return}
@@ -480,24 +559,24 @@ function renderExpenses(){
   renderStats();const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;
   const rows=personFiltered(expenses).filter(x=>(!m||x.expense_date.startsWith(m))&&(!s||x.status===s));
   document.getElementById("expenseRows").innerHTML=rows.length?rows.map(x=>`<tr>
-    <td>${x.expense_date}</td><td><b>${personLabel(x.expense_person||"petro")}</b></td><td><b>${esc(x.counterparty)}</b><div class="sub">${esc(x.description)}</div></td><td>${esc(x.category)}</td><td>${esc(x.entity)}</td>
-    <td class="right"><b>${money(x.amount,x.currency)}</b></td><td>${statusBadge(x.status)}</td><td><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Немає витрат.</td></tr>`;
+    <td>${x.expense_date}</td><td><b>${personLabel(x.expense_person||"petro")}</b></td><td><b>${requestKindLabel(x.request_kind)}</b></td><td><b>${esc(x.counterparty)}</b><div class="sub">${esc(x.description)}</div></td><td>${esc(x.category)}</td><td>${esc(x.entity)}</td>
+    <td class="right"><b>${money(x.amount,x.currency)}</b></td><td>${statusBadge(x.status)}</td><td><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></td></tr>`).join(""):`<tr><td colspan="9" class="empty">Немає записів.</td></tr>`;
 }
 function openNew(){
   if(profile.role!=="accountant"){toast("Нові витрати створює бухгалтер");return}
-  document.getElementById("expenseForm").reset();document.getElementById("editId").value="";document.getElementById("fDate").value=today();document.getElementById("fPerson").value=currentPerson==="alina"?"alina":"petro";document.getElementById("expenseModalTitle").textContent="Нова витрата";openModal("expenseModal");
+  document.getElementById("expenseForm").reset();document.getElementById("editId").value="";document.getElementById("fDate").value=today();document.getElementById("fPerson").value=currentPerson==="alina"?"alina":"petro";document.getElementById("fRequestKind").value="payment";document.getElementById("expenseModalTitle").textContent="Новий запис";openModal("expenseModal");
 }
 function openEdit(id){
   const x=expenses.find(v=>v.id===id);if(!x||profile.role!=="accountant"||!["draft","rejected"].includes(x.status))return;
   closeModal("detailModal");document.getElementById("editId").value=id;document.getElementById("expenseModalTitle").textContent="Редагувати витрату";
-  document.getElementById("fDate").value=x.expense_date;document.getElementById("fPerson").value=x.expense_person||"petro";document.getElementById("fEntity").value=x.entity;document.getElementById("fCategory").value=x.category;document.getElementById("fCounterparty").value=x.counterparty;
+  document.getElementById("fDate").value=x.expense_date;document.getElementById("fPerson").value=x.expense_person||"petro";document.getElementById("fRequestKind").value=x.request_kind||"payment";document.getElementById("fEntity").value=x.entity;document.getElementById("fCategory").value=x.category;document.getElementById("fCounterparty").value=x.counterparty;
   document.getElementById("fDescription").value=x.description;document.getElementById("fAmount").value=x.amount;document.getElementById("fCurrency").value=x.currency;document.getElementById("fPayment").value=x.payment_method||"Bank transfer";
   document.getElementById("fFile").value="";openModal("expenseModal");
 }
 async function saveExpense(e){
   e.preventDefault();const btn=document.getElementById("saveExpenseBtn");btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Збереження';
   const id=document.getElementById("editId").value;
-  const vals={p_expense_date:document.getElementById("fDate").value,p_expense_person:document.getElementById("fPerson").value,p_entity:document.getElementById("fEntity").value,p_category:document.getElementById("fCategory").value,p_counterparty:document.getElementById("fCounterparty").value.trim(),p_description:document.getElementById("fDescription").value.trim(),p_amount:Number(document.getElementById("fAmount").value),p_currency:document.getElementById("fCurrency").value,p_payment_method:document.getElementById("fPayment").value};
+  const vals={p_expense_date:document.getElementById("fDate").value,p_expense_person:document.getElementById("fPerson").value,p_request_kind:document.getElementById("fRequestKind").value,p_entity:document.getElementById("fEntity").value,p_category:document.getElementById("fCategory").value,p_counterparty:document.getElementById("fCounterparty").value.trim(),p_description:document.getElementById("fDescription").value.trim(),p_amount:Number(document.getElementById("fAmount").value),p_currency:document.getElementById("fCurrency").value,p_payment_method:document.getElementById("fPayment").value};
   let result;
   if(id)result=await sb.rpc("update_expense",{p_id:id,...vals});
   else result=await sb.rpc("create_expense",vals);
@@ -523,7 +602,7 @@ async function openDetail(id){
   document.getElementById("dTitle").textContent=x.counterparty;document.getElementById("dSub").textContent=x.description;
   const creator=profiles[x.created_by]?.display_name||"—", approver=profiles[x.approved_by]?.display_name||"—";
   let controls="";
-  if(profile.role==="owner"&&x.status==="submitted"){
+  if(profile.role==="owner"&&x.status==="submitted"&&(profile.approval_person||"petro")===(x.expense_person||"petro")){
     controls=`<div class="approval"><div><textarea id="approveComment" placeholder="Коментар (необов'язково)"></textarea><button class="btn green" style="width:100%;margin-top:8px" onclick="approveCurrent()">✓ APPROVE</button></div>
     <div><textarea id="rejectComment" placeholder="Причина відхилення"></textarea><button class="btn red" style="width:100%;margin-top:8px" onclick="rejectCurrent()">✕ REJECT</button></div></div>`;
   }else if(profile.role==="accountant"&&["draft","rejected"].includes(x.status)){
@@ -535,7 +614,7 @@ async function openDetail(id){
     <div class="sub">${new Date(l.created_at).toLocaleString("uk-UA")}${l.note?" · "+esc(l.note):""}</div></div></div>`).join("");
   document.getElementById("detailContent").innerHTML=`<div class="detailgrid">
     <div class="card" style="margin:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>${money(x.amount,x.currency)}</h2>${statusBadge(x.status)}</div>
-      <div class="kv"><div>Дата</div><div><b>${x.expense_date}</b></div><div>Кому</div><div><b>${personLabel(x.expense_person||"petro")}</b></div><div>Компанія</div><div><b>${esc(x.entity)}</b></div><div>Категорія</div><div><b>${esc(x.category)}</b></div>
+      <div class="kv"><div>Дата</div><div><b>${x.expense_date}</b></div><div>Кому</div><div><b>${personLabel(x.expense_person||"petro")}</b></div><div>Тип</div><div><b>${requestKindLabel(x.request_kind)}</b></div><div>Компанія</div><div><b>${esc(x.entity)}</b></div><div>Категорія</div><div><b>${esc(x.category)}</b></div>
       <div>Оплата</div><div><b>${esc(x.payment_method||"—")}</b></div><div>Створив</div><div><b>${esc(creator)}</b></div><div>Документ</div><div>${x.attachment_path?`<span class="link" onclick="openDocument('${esc(x.attachment_path)}')">Відкрити</span>`:"—"}</div>
       ${x.owner_comment?`<div>Коментар</div><div><b>${esc(x.owner_comment)}</b></div>`:""}${x.approved_at?`<div>Approved</div><div><b>${esc(approver)} · ${new Date(x.approved_at).toLocaleString("uk-UA")}</b></div>`:""}</div>${controls}
     </div><div class="card" style="margin:0"><h2>Audit trail</h2><div class="timeline">${logs||'<div class="muted">Немає подій.</div>'}</div></div></div>`;
@@ -552,10 +631,10 @@ async function openDocument(path){
   const r=await sb.storage.from("expense-documents").createSignedUrl(path,90);if(r.error){toast(r.error.message);return}window.open(r.data.signedUrl,"_blank");
 }
 function renderReport(){
-  const m=document.getElementById("reportMonth").value, eligible=personFiltered(expenses).filter(x=>x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
+  const m=document.getElementById("reportMonth").value, eligible=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
   const cats={};eligible.forEach(x=>{const k=x.category+"|"+x.currency;cats[k]=(cats[k]||0)+Number(x.amount)});
   document.getElementById("categoryTotals").innerHTML=Object.entries(cats).length?Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{const [cat,c]=k.split("|");return `<div class="rowline"><span>${esc(cat)}</span><b>${money(v,c)}</b></div>`}).join(""):'<div class="muted">Ще немає approved витрат.</div>';
-  document.getElementById("excludedTotals").innerHTML=["draft","submitted","rejected"].map(s=>{const arr=personFiltered(expenses).filter(x=>x.expense_date.startsWith(m)&&x.status===s),by={};arr.forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
+  document.getElementById("excludedTotals").innerHTML=["draft","submitted","rejected"].map(s=>{const arr=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&x.status===s),by={};arr.forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));
     return `<h3>${STATUS_LABELS[s]} · ${arr.length}</h3>${Object.entries(by).map(([c,v])=>`<div class="rowline"><span>${arr.filter(x=>x.currency===c).length} витрат</span><b>${money(v,c)}</b></div>`).join("")||'<div class="muted small">0</div>'}`}).join("");
   document.getElementById("reportRows").innerHTML=eligible.length?eligible.map(x=>`<tr><td>${x.expense_date}</td><td><b>${personLabel(x.expense_person||"petro")}</b></td><td>${esc(x.category)}</td><td><span class="link" onclick="openDetail('${x.id}')">${esc(x.counterparty)}</span></td><td>${esc(x.entity)}</td><td class="right"><b>${money(x.amount,x.currency)}</b></td><td>${statusBadge(x.status)}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">Немає approved витрат.</td></tr>`;
 }
@@ -570,7 +649,7 @@ function renderAll(){
   if(sub && document.getElementById("expensesSection").style.display!=="none"){
     sub.textContent=`Зріз: ${suffix} · спільна база · approval власника · audit trail.`;
   }
-  renderExpenses();renderReport();
+  renderExpenses();renderReport();updateAppBadge();
 }
 boot();
 </script>

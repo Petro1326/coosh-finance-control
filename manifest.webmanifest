@@ -1,4 +1,5 @@
 {
+  "id": "/coosh-finance-control/",
   "name": "COOSH Finance Control",
   "short_name": "COOSH Finance",
   "start_url": "./",
@@ -7,6 +8,11 @@
   "background_color": "#f5f6f8",
   "theme_color": "#0d0e10",
   "icons": [
-    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
