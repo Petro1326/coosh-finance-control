@@ -90,6 +90,13 @@
         let u=x.data&&(x.data.signedURL||x.data.signedUrl||x.data.signed_url);
         if(u&&u.startsWith('/'))u=this.url+u;
         return {data:{signedUrl:u},error:null};
+      },
+      remove:async(paths)=>{
+        const s=await this._validSession();if(!s)return {data:null,error:{message:'Session expired. Sign in again.'}};
+        const arr=Array.isArray(paths)?paths:[paths];
+        const endpoint='/storage/v1/object/'+encodeURIComponent(bucket);
+        const r=await requestWithTimeout(this.url+endpoint,{method:'DELETE',headers:{apikey:this.key,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:JSON.stringify({prefixes:arr})});
+        return parseRes(r);
       }
     })};
     }
@@ -142,7 +149,7 @@
     #pageSub{display:none}
 
     /* Buttons */
-    .btn{border:1px solid #d5d9df;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;color:#1a1c20}.btn.black{background:#111214;color:#fff;border-color:#111214}.btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}.btn.compact{padding:7px 10px;font-size:12px;line-height:1.1}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn{border:1px solid #d5d9df;background:#fff;border-radius:10px;padding:9px 13px;font-weight:800;color:#1a1c20}.btn.black{background:#111214;color:#fff;border-color:#111214}.btn.green{background:var(--green);border-color:var(--green);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger-outline{background:#fff;color:#c93434;border-color:#efb8b8}.btn.danger-outline:hover{background:#fff1f1;border-color:#e44747}.btn.compact{padding:7px 10px;font-size:12px;line-height:1.1}.btn:disabled{opacity:.5;cursor:not-allowed}
 
     /* Person segmented control */
     .person-switch{display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:4px;background:#eceef1;border-radius:14px;margin-bottom:18px}.person-tab{border:0!important;background:transparent!important;color:#73777f!important;border-radius:10px!important;padding:10px 12px!important;box-shadow:none!important}.person-tab.active{background:#fff!important;color:#111!important;box-shadow:0 1px 5px rgba(0,0,0,.08)!important}
@@ -151,7 +158,7 @@
     .expense-top-summary{margin-bottom:14px;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}.summary-heading{display:none}.mini-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mini-summary.three{grid-template-columns:repeat(3,minmax(0,1fr))}.mini-card{border:1px solid #e0e3e8;border-radius:15px;padding:14px 16px;background:#fff;box-shadow:0 3px 12px rgba(16,24,40,.025)}.mini-card h3{margin:0 0 10px;font-size:15px}.summary-lines{display:grid;gap:0}.summary-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border:0}.summary-line span{color:#777d86}.summary-line b{white-space:nowrap;font-size:13px}.monthly-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.summary-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fafbfc}.summary-card h3{margin:0 0 10px;font-size:15px}
 
     /* Status squares */
-    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 11px;cursor:pointer;min-height:105px;display:flex;flex-direction:column;justify-content:flex-end;transition:.15s ease}.stat:hover{transform:translateY(-1px)}.stat span{font-size:12px;font-weight:750;line-height:1.15}.stat strong{font-size:25px;display:block;margin:6px 0 3px}.stat small{font-size:10px;line-height:1.2;color:var(--muted)}.stat.pending{background:var(--yellow-bg);border-color:#f2d696}.stat.approved{background:var(--green-bg);border-color:#bfe7d2}.stat.paid{background:var(--blue-bg);border-color:#c9dcff}.stat.rejected{background:var(--red-bg);border-color:#ffcaca}.stat.selected{outline:2px solid #111;outline-offset:2px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 11px;cursor:pointer;min-height:105px;display:flex;flex-direction:column;justify-content:flex-end;transition:.15s ease}.stat:hover{transform:translateY(-1px)}.stat span{font-size:12px;font-weight:750;line-height:1.15}.stat strong{font-size:25px;display:block;margin:6px 0 3px}.stat small{font-size:10px;line-height:1.2;color:var(--muted)}.stat.pending{background:var(--yellow-bg);border-color:#f2d696}.stat.approved{background:var(--green-bg);border-color:#bfe7d2}.stat.paid{background:var(--blue-bg);border-color:#c9dcff}.stat.rejected{background:var(--red-bg);border-color:#ffcaca}.stat.selected{outline:2px solid #111;outline-offset:2px}.stat.borrowed{background:#fff0f0;border-color:#f3c0c0}.stat.contributed{background:#effaf3;border-color:#bfe7d2}.stat.total-pos{background:#effaf3;border-color:#bfe7d2}.stat.total-neg{background:#fff0f0;border-color:#f3c0c0}.stat.total-neutral{background:#f6f7f9;border-color:#dfe3e8}.view-tabs{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.view-tab{border:0;background:transparent;padding:0;margin:0;font-size:42px;font-weight:850;line-height:1;color:#a5acb5;cursor:pointer}.view-tab.active{color:#111}.loan-summary-note{font-size:12px;color:var(--muted);margin-top:2px}
 
     /* Expense list */
     .list-card{background:transparent;border:0;padding:0;box-shadow:none;margin:0}.list-tools{display:none}.expense-list{display:flex;flex-direction:column;gap:10px}.expense-card{background:#fff;border:1px solid #e1e4e8;border-radius:15px;box-shadow:var(--shadow);overflow:hidden}.expense-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 14px}.expense-left{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;min-width:0}.expense-icon{width:46px;height:46px;border-radius:11px;border:1px solid #e4e6ea;background:#fafbfc;display:grid;place-items:center;font-size:18px;font-weight:900;color:#111}.expense-amount{font-size:19px;font-weight:900;letter-spacing:-.02em;line-height:1.05}.expense-amount .currency{font-size:12px;font-weight:650;color:#797f88;margin-left:4px}.expense-counterparty{font-weight:800;font-size:14px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-desc{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px}.quick-approve{border:0;background:#111214;color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:850;white-space:nowrap}.quick-approve:disabled{opacity:.55}.badge{display:inline-block;padding:5px 8px;border-radius:8px;font-size:11px;font-weight:850;background:#f1f2f4;white-space:nowrap}.badge.submitted{background:var(--yellow-bg);color:var(--yellow);border:1px solid #f1c45e}.badge.approved,.badge.paid,.badge.included{background:var(--green-bg);color:var(--green);border:1px solid #bde6cf}.badge.rejected{background:var(--red-bg);color:var(--red);border:1px solid #ffc6c6}.badge.draft{color:#636872;border:1px solid #dde0e5}
@@ -161,11 +168,11 @@
     .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.025);margin-bottom:18px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:13px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#767c86}.right{text-align:right}.sub{font-size:12px;color:var(--muted);margin-top:4px}.link{color:#2458ff;font-weight:750;cursor:pointer}
     input,select,textarea{width:100%;border:1px solid #d5dae2;border-radius:10px;padding:10px;background:#fff}textarea{min-height:88px;resize:vertical}label{font-size:12px;font-weight:800;display:flex;flex-direction:column;gap:7px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.span2{grid-column:span 2}
     .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.47);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal{background:#fff;border-radius:18px;max-width:770px;width:100%;max-height:92vh;overflow:auto;padding:22px}.modal.wide{max-width:1020px}.modalhead{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.x{width:34px;height:34px;border:0;border-radius:9px;background:#f0f2f4;font-size:20px}.detailgrid,.reportgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.kv{display:grid;grid-template-columns:145px 1fr;gap:10px 12px}.kv div:nth-child(odd){color:var(--muted)}.approval{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.timeline{display:flex;flex-direction:column;gap:14px}.event{display:flex;gap:10px}.dot{width:9px;height:9px;background:#111;border-radius:50%;margin-top:5px;flex:none}.notice{padding:13px 15px;background:var(--green-bg);border-radius:11px;margin-bottom:16px}.warning{background:var(--yellow-bg)}.rowline{display:flex;justify-content:space-between;gap:15px;padding:11px 0;border-bottom:1px solid var(--line)}
-    .authwrap,.setupwrap{min-height:82vh;display:grid;place-items:center}.authcard,.setupcard{width:min(470px,95vw);background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 14px 45px rgba(0,0,0,.08)}.logo{width:48px;height:48px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}.stack{display:flex;flex-direction:column;gap:14px;margin-top:20px}.error{background:var(--red-bg);color:#922d36;padding:11px 13px;border-radius:10px;margin-top:12px;display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:80}.empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}.cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}.hidden-filter-month{display:none!important}
+    .authwrap,.setupwrap{min-height:82vh;display:grid;place-items:center}.authcard,.setupcard{width:min(470px,95vw);background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 14px 45px rgba(0,0,0,.08)}.logo{width:48px;height:48px;border-radius:13px;background:#111;color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}.stack{display:flex;flex-direction:column;gap:14px;margin-top:20px}.error{background:var(--red-bg);color:#922d36;padding:11px 13px;border-radius:10px;margin-top:12px;display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:80}.empty{text-align:center;color:var(--muted);padding:32px}.spinner{width:18px;height:18px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-4px}@keyframes spin{to{transform:rotate(360deg)}}.cloud{font-size:11px;background:#1d2228;color:#dce4ea;padding:5px 8px;border-radius:999px}.locked{background:#fafafa;border:1px dashed #cbd0d7;padding:12px;border-radius:10px;color:#6b7079}.hidden-filter-month{display:none!important}.hidden{display:none!important}
 
     @media(max-width:900px){.detailgrid,.reportgrid,.monthly-summary{grid-template-columns:1fr}.userline{display:none}}
     @media(max-width:650px){
-      .top{min-height:64px;padding:10px 12px;gap:7px}.brand{font-size:15px}.brand-long,.cloud{display:none}.top-right{gap:5px;flex:1;justify-content:flex-end}.top-control{height:36px;font-size:11px;padding:0 9px;border-radius:9px}.top-control.bell{width:36px}.top-control.exit{padding:0 9px}.container{padding:18px 12px 28px}h1{font-size:34px}.pagehead{margin:0 0 16px;align-items:center}.pagehead .actions{width:auto;margin-left:auto}.pagehead .actions .btn{padding:7px 9px;font-size:11px}.pagehead .actions .btn:first-child{display:none}.person-switch{margin-bottom:16px}.person-tab{padding:9px 6px!important;font-size:12px}.mini-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mini-summary.three{grid-template-columns:1fr}.mini-card{padding:12px}.mini-card h3{font-size:14px}.summary-line{padding:4px 0}.summary-line b{font-size:12px}.stats{gap:7px;margin-bottom:16px}.stat{padding:8px 7px;min-height:86px;border-radius:12px}.stat span{font-size:9.5px}.stat strong{font-size:21px;margin:5px 0 2px}.stat small{display:none}.expense-list{gap:8px}.expense-main{padding:10px}.expense-left{grid-template-columns:40px minmax(0,1fr);gap:10px}.expense-icon{width:40px;height:40px;border-radius:10px;font-size:16px}.expense-amount{font-size:17px}.expense-counterparty{font-size:13px;margin-top:4px}.expense-desc{font-size:11px}.expense-actions{gap:5px}.quick-approve{padding:7px 9px;font-size:11px}.badge{font-size:10px;padding:4px 6px}.details-toggle summary{padding:8px 10px;font-size:11px}.details-body{padding:0 10px 10px}.btn{padding:8px 10px;font-size:12px}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.approval{grid-template-columns:1fr}.monthly-summary{grid-template-columns:1fr}.modal{padding:16px}
+      .top{min-height:64px;padding:10px 12px;gap:7px}.brand{font-size:15px}.brand-long,.cloud{display:none}.top-right{gap:5px;flex:1;justify-content:flex-end}.top-control{height:36px;font-size:11px;padding:0 9px;border-radius:9px}.top-control.bell{width:36px}.top-control.exit{padding:0 9px}.container{padding:18px 12px 28px}h1{font-size:34px}.view-tab{font-size:34px}.pagehead{margin:0 0 16px;align-items:center}.pagehead .actions{width:auto;margin-left:auto}.pagehead .actions .btn{padding:7px 9px;font-size:11px}.pagehead .actions .btn:first-child{display:none}.person-switch{margin-bottom:16px}.person-tab{padding:9px 6px!important;font-size:12px}.mini-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mini-summary.three{grid-template-columns:1fr}.mini-card{padding:12px}.mini-card h3{font-size:14px}.summary-line{padding:4px 0}.summary-line b{font-size:12px}.stats{gap:7px;margin-bottom:16px}.stat{padding:8px 7px;min-height:86px;border-radius:12px}.stat span{font-size:9.5px}.stat strong{font-size:21px;margin:5px 0 2px}.stat small{display:none}.expense-list{gap:8px}.expense-main{padding:10px}.expense-left{grid-template-columns:40px minmax(0,1fr);gap:10px}.expense-icon{width:40px;height:40px;border-radius:10px;font-size:16px}.expense-amount{font-size:17px}.expense-counterparty{font-size:13px;margin-top:4px}.expense-desc{font-size:11px}.expense-actions{gap:5px}.quick-approve{padding:7px 9px;font-size:11px}.badge{font-size:10px;padding:4px 6px}.details-toggle summary{padding:8px 10px;font-size:11px}.details-body{padding:0 10px 10px}.btn{padding:8px 10px;font-size:12px}.formgrid{grid-template-columns:1fr}.span2{grid-column:auto}.approval{grid-template-columns:1fr}.monthly-summary{grid-template-columns:1fr}.modal{padding:16px}
     }
     @media(max-width:390px){.top-control{padding:0 7px}.top-month-label{max-width:84px;overflow:hidden;text-overflow:ellipsis}.top-control.exit{padding:0 8px}.brand{font-size:14px}.stat span{font-size:9px}.expense-main{grid-template-columns:minmax(0,1fr) auto}.quick-approve{padding:7px 8px}}
   </style>
@@ -235,10 +242,9 @@
 
   <main class="container">
     <div class="pagehead">
-      <div><h1 id="pageTitle">Витрати</h1><div id="pageSub"></div></div>
+      <div><div class="view-tabs"><button class="view-tab active" id="tabExpenses" onclick="showSection('expenses')">Витрати</button><button class="view-tab" id="tabLoans" onclick="showSection('loans')">Позики</button></div><div id="pageSub"></div></div>
       <div class="actions">
-        <button class="btn compact" onclick="showSection('expenses')">Витрати</button>
-        <button class="btn compact" onclick="showSection('report')">Звіт</button>
+        <button class="btn compact" id="reportBtn" onclick="showSection('report')">Звіт</button>
         <button class="btn black compact" id="newExpenseBtn" onclick="openNew()">+ Витрата</button>
       </div>
     </div>
@@ -250,24 +256,37 @@
         <button class="btn person-tab" id="personCombined" onclick="setPerson('combined')">Разом</button>
       </div>
 
-      <div class="expense-top-summary">
+      <div class="expense-top-summary" id="expenseSummaryWrap">
         <div class="mini-summary" id="expenseMiniSummary">
           <div class="mini-card" id="expenseSummaryPetro"><h3>Петро</h3><div class="summary-lines" id="expenseMonthTotalsPetro"></div></div>
           <div class="mini-card" id="expenseSummaryAlina"><h3>Аліна</h3><div class="summary-lines" id="expenseMonthTotalsAlina"></div></div>
           <div class="mini-card" id="expenseSummaryCombined"><h3>Разом</h3><div class="summary-lines" id="expenseMonthTotalsCombined"></div></div>
         </div>
       </div>
+      <div class="expense-top-summary hidden" id="loanSummaryWrap">
+        <div class="mini-summary" id="loanMiniSummary">
+          <div class="mini-card" id="loanSummaryPetro"><h3>Петро</h3><div class="summary-lines" id="loanMonthTotalsPetro"></div></div>
+          <div class="mini-card" id="loanSummaryAlina"><h3>Аліна</h3><div class="summary-lines" id="loanMonthTotalsAlina"></div></div>
+          <div class="mini-card" id="loanSummaryCombined"><h3>Разом</h3><div class="summary-lines" id="loanMonthTotalsCombined"></div></div>
+        </div>
+      </div>
 
-      <div class="stats">
+      <div class="stats" id="expenseStatsWrap">
         <div class="stat pending" id="statCardSubmitted" onclick="setStatusFilter('submitted')"><span>На погодженні</span><strong id="statPending">0</strong><small id="sumPending"></small></div>
         <div class="stat approved" id="statCardApproved" onclick="setStatusFilter('approved')"><span>Погоджено</span><strong id="statApproved">0</strong><small>можуть увійти у звіт</small></div>
         <div class="stat paid" id="statCardPaid" onclick="setStatusFilter('paid')"><span>Оплачено</span><strong id="statPaid">0</strong><small>тільки після approval</small></div>
         <div class="stat rejected" id="statCardRejected" onclick="setStatusFilter('rejected')"><span>Відхилено</span><strong id="statRejected">0</strong><small>не входять у звіт</small></div>
       </div>
+      <div class="stats hidden" id="loanStatsWrap">
+        <div class="stat borrowed" id="loanCardBorrowed" onclick="setLoanTypeFilter('borrowed')"><span>Позичили</span><strong id="loanBorrowedCount">0</strong><small id="loanBorrowedSum">0</small></div>
+        <div class="stat contributed" id="loanCardContributed" onclick="setLoanTypeFilter('contributed')"><span>Внесли</span><strong id="loanContributedCount">0</strong><small id="loanContributedSum">0</small></div>
+        <div class="stat total-neutral" id="loanCardTotal" onclick="setLoanTypeFilter('')"><span>Тотал</span><strong id="loanTotalCount">0</strong><small id="loanTotalSum">0</small></div>
+      </div>
 
       <div class="list-card">
         <input type="month" id="monthFilter" class="hidden-filter-month" onchange="renderExpenses()">
         <input type="hidden" id="statusFilter" value="">
+        <input type="hidden" id="loanTypeFilter" value="">
         <div class="expense-list" id="expenseRows"></div>
       </div>
     </section>
@@ -311,7 +330,7 @@
         </select>
       </label>
       <label>Тип
-        <select id="fRequestKind">
+        <select id="fRequestKind" onchange="updateRequestKindUI()">
           <option value="payment">Оплата</option>
           <option value="loan">Позика</option>
         </select>
@@ -322,7 +341,7 @@
       <label class="span2">Опис<textarea id="fDescription" required></textarea></label>
       <label>Сума<input id="fAmount" type="number" step="0.01" min="0.01" required></label>
       <label>Валюта<select id="fCurrency"><option>UAH</option><option>USD</option><option>EUR</option><option>PLN</option></select></label>
-      <label>Спосіб оплати<select id="fPayment"><option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option></select></label>
+      <label id="fPaymentLabel">Спосіб оплати<select id="fPayment"><option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option></select></label>
       <label>Інвойс / чек<input id="fFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.xlsx,.xls,.doc,.docx"><span class="muted small">До 12 MB рекомендовано.</span></label>
       <div class="span2 actions"><button class="btn black" id="saveExpenseBtn" type="submit">Зберегти</button></div>
     </form>
@@ -354,7 +373,7 @@ const STATUS_LABELS={draft:"Чернетка",submitted:"На погодженн
 const REQUEST_KIND_LABELS={payment:"Оплата",loan:"Позика"};
 const VAPID_PUBLIC_KEY="BF-_mwC3SGLt_LePsOHlq3exVvzhdCECdWN_qQfM4RX0dixDGY8-IRngeaufTwFLFy5nHv57a2pfwXb_NPPOo98";
 const ACTION_LABELS={created:"Створено",updated:"Відредаговано",attachment_added:"Додано документ",submitted:"Відправлено на погодження",approved:"Затверджено",rejected:"Відхилено",paid:"Позначено як оплачено",included:"Включено у місячний звіт"};
-let sb=null, currentUser=null, profile=null, expenses=[], profiles={}, auditLogs=[], currentDetail=null, realtimeChannel=null, currentPerson="petro";
+let sb=null, currentUser=null, profile=null, expenses=[], profiles={}, auditLogs=[], currentDetail=null, realtimeChannel=null, currentPerson="petro", currentSection="expenses";
 
 function cfg(){return {url:localStorage.getItem("coosh_sb_url")||"",key:localStorage.getItem("coosh_sb_key")||""}}
 function initClient(){const c=cfg();if(!c.url||!c.key)return false;sb=supabase.createClient(c.url,c.key);return true}
@@ -384,6 +403,8 @@ function personFiltered(list){
 }
 
 function requestKindLabel(k){return REQUEST_KIND_LABELS[k||"payment"]||"Оплата"}
+function loanDirectionValue(x){const raw=String(x?.payment_method||"").toLowerCase(); if(["contributed","внесли","contribution","injected","внесок"].includes(raw)) return "contributed"; if(["borrowed","позичили","loan","borrow"].includes(raw)) return "borrowed"; const hint=(String(x?.description||"")+" "+String(x?.category||"")).toLowerCase(); if(hint.includes("внес")) return "contributed"; return "borrowed"}
+function loanDirectionLabel(v){return v==="contributed"?"Внесли":"Позичили"}
 function isStandaloneApp(){
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
 }
@@ -582,7 +603,7 @@ async function loadApp(){
   const {data:p,error}=await sb.from("profiles").select("user_id,display_name,email,role,approval_person").eq("user_id",currentUser.id).single();
   if(error||!p){showOnly("authView");alert("Для цього акаунта не призначена роль у таблиці profiles. Виконай 02_assign_users.sql.");return}
   profile=p;showOnly("appView");document.getElementById("userLine").textContent=`${p.display_name} · ${p.role==="owner"?"Власник":"Бухгалтер"}`;
-  document.getElementById("newExpenseBtn").style.display=p.role==="accountant"?"inline-block":"none";document.getElementById("finalizeBtn").style.display=p.role==="owner"?"inline-block":"none";
+  document.getElementById("newExpenseBtn").style.display=p.role==="accountant"?"inline-block":"none";document.getElementById("finalizeBtn").style.display=p.role==="owner"?"inline-block":"none";updateActionButtons();
   await refreshAll();await refreshNotificationButton();subscribeRealtime();
   const deepId=new URLSearchParams(location.search).get("expense");
   if(deepId && expenses.some(x=>x.id===deepId)) setTimeout(()=>openDetail(deepId),150);
@@ -601,26 +622,63 @@ async function refreshAll(){
   expenses=ex.data||[];profiles={};(pr.data||[]).forEach(x=>profiles[x.user_id]=x);auditLogs=al.data||[];
   renderAll();
 }
+function updateActionButtons(){const newBtn=document.getElementById("newExpenseBtn"), reportBtn=document.getElementById("reportBtn"); if(newBtn){newBtn.textContent=currentSection==="loans"?"+ Позика":"+ Витрата"; newBtn.style.display=profile&&profile.role==="accountant"&&currentSection!=="report"?"inline-block":"none";} if(reportBtn) reportBtn.style.display=currentSection==="loans"?"none":"inline-block"; ["tabExpenses","tabLoans"].forEach(id=>document.getElementById(id)?.classList.remove("active")); if(currentSection==="loans") document.getElementById("tabLoans")?.classList.add("active"); else document.getElementById("tabExpenses")?.classList.add("active");}
 function showSection(s){
-  const isExp=s==="expenses";document.getElementById("expensesSection").style.display=isExp?"block":"none";document.getElementById("reportSection").style.display=isExp?"none":"block";
-  document.getElementById("pageTitle").textContent=isExp?"Витрати":"Місячний звіт";syncTopMonth();
-  if(!isExp)renderReport();else renderExpenses();
+  currentSection=s; const showMain=s!=="report";document.getElementById("expensesSection").style.display=showMain?"block":"none";document.getElementById("reportSection").style.display=s==="report"?"block":"none";
+  syncTopMonth(); updateActionButtons();
+  if(s==="report")renderReport();else renderExpenses();
 }
 function setStatusFilter(s){const el=document.getElementById("statusFilter");el.value=el.value===s?"":s;renderExpenses()}
+function setLoanTypeFilter(v){const el=document.getElementById("loanTypeFilter"); el.value=el.value===v?"":v; renderExpenses()}
 function renderStats(){
-  const m=document.getElementById("monthFilter").value;const scoped=personFiltered(expenses).filter(x=>!m||x.expense_date.startsWith(m));
+  const m=document.getElementById("monthFilter").value;
+  if(currentSection==="loans") return renderLoanStats(m);
+  const scoped=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&(!m||x.expense_date.startsWith(m)));
   const cnt=s=>scoped.filter(x=>x.status===s).length;
   document.getElementById("statPending").textContent=cnt("submitted");document.getElementById("statApproved").textContent=cnt("approved");document.getElementById("statPaid").textContent=cnt("paid");document.getElementById("statRejected").textContent=cnt("rejected");
   const by={};scoped.filter(x=>x.status==="submitted").forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount));document.getElementById("sumPending").textContent=Object.entries(by).map(([c,v])=>money(v,c)).join(" · ")||"0";
   const selected=document.getElementById("statusFilter").value;[["submitted","statCardSubmitted"],["approved","statCardApproved"],["paid","statCardPaid"],["rejected","statCardRejected"]].forEach(([s,id])=>document.getElementById(id)?.classList.toggle("selected",selected===s));
 }
-function expenseIcon(x){const c=(x.category||"").toLowerCase();if(c.includes("marketing"))return "◎";if(c.includes("rent"))return "⌂";if(c.includes("logistics"))return "→";if(c.includes("software"))return "▣";if(c.includes("payroll"))return "₴";if(c.includes("tax"))return "%";if(c.includes("cogs"))return "C";return (x.counterparty||"•").trim().slice(0,1).toUpperCase()}
+function renderLoanStats(month){
+  const scoped=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="loan"&&(!month||x.expense_date.startsWith(month)));
+  const borrowed=scoped.filter(x=>loanDirectionValue(x)==="borrowed");
+  const contributed=scoped.filter(x=>loanDirectionValue(x)==="contributed");
+  const fmt=list=>{const by={}; list.forEach(x=>by[x.currency]=(by[x.currency]||0)+Number(x.amount||0)); return Object.entries(by).map(([c,v])=>money(v,c)).join(" · ")||"0";};
+  document.getElementById("loanBorrowedCount").textContent=borrowed.length;
+  document.getElementById("loanContributedCount").textContent=contributed.length;
+  document.getElementById("loanBorrowedSum").textContent=fmt(borrowed);
+  document.getElementById("loanContributedSum").textContent=fmt(contributed);
+  const totalBy={UAH:0,USD:0,EUR:0,PLN:0}; contributed.forEach(x=>totalBy[x.currency]=(totalBy[x.currency]||0)+Number(x.amount||0)); borrowed.forEach(x=>totalBy[x.currency]=(totalBy[x.currency]||0)-Number(x.amount||0));
+  const nonZero=Object.entries(totalBy).filter(([,v])=>Math.abs(v)>0.0001);
+  document.getElementById("loanTotalCount").textContent=scoped.length;
+  document.getElementById("loanTotalSum").textContent=nonZero.length?nonZero.map(([c,v])=>`${v>=0?"+":"−"}${money(Math.abs(v),c)}`).join(" · "):"0";
+  const totalCard=document.getElementById("loanCardTotal"); totalCard.classList.remove("total-pos","total-neg","total-neutral","selected");
+  const net=Object.values(totalBy).reduce((a,b)=>a+b,0); totalCard.classList.add(net>0?"total-pos":net<0?"total-neg":"total-neutral");
+  const selected=document.getElementById("loanTypeFilter").value; document.getElementById("loanCardBorrowed")?.classList.toggle("selected",selected==="borrowed"); document.getElementById("loanCardContributed")?.classList.toggle("selected",selected==="contributed"); totalCard.classList.toggle("selected",selected==="");
+  const totalLabel=totalCard.querySelector("span"); if(totalLabel) totalLabel.textContent=net>0?"Тотал · внесли більше":net<0?"Тотал · позичили більше":"Тотал";
+}
+function expenseIcon(x){const c=(x.category||"").toLowerCase();if((x.request_kind||"payment")==="loan") return loanDirectionValue(x)==="contributed"?"↗":"↘";if(c.includes("marketing"))return "◎";if(c.includes("rent"))return "⌂";if(c.includes("logistics"))return "→";if(c.includes("software"))return "▣";if(c.includes("payroll"))return "₴";if(c.includes("tax"))return "%";if(c.includes("cogs"))return "C";return (x.counterparty||"•").trim().slice(0,1).toUpperCase()}
 function canQuickApprove(x){return !!(profile&&profile.role==="owner"&&x.status==="submitted"&&(profile.approval_person||"petro")===(x.expense_person||"petro"))}
-async function quickApprove(id,btn){if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>'}const r=await sb.rpc("approve_expense",{p_id:id,p_comment:null});if(r.error){toast(r.error.message);if(btn){btn.disabled=false;btn.textContent="✓ Погодити"}return}toast("Витрату погоджено");await refreshAll()}
-function updateSummaryVisibility(){const p=document.getElementById("expenseSummaryPetro"),a=document.getElementById("expenseSummaryAlina"),c=document.getElementById("expenseSummaryCombined"),wrap=document.getElementById("expenseMiniSummary");if(!p||!a||!c||!wrap)return;p.style.display=currentPerson==="alina"?"none":"block";a.style.display=currentPerson==="petro"?"none":"block";c.style.display="block";wrap.classList.toggle("three",currentPerson==="combined")}
+async function quickApprove(id,btn){if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>'}const r=await sb.rpc("approve_expense",{p_id:id,p_comment:null});if(r.error){toast(r.error.message);if(btn){btn.disabled=false;btn.textContent="✓ Погодити"}return}toast("Запис погоджено");await refreshAll()}
+function updateSummaryVisibility(){
+  const pref=currentSection==="loans"?"loan":"expense";
+  const p=document.getElementById(pref+"SummaryPetro"),a=document.getElementById(pref+"SummaryAlina"),c=document.getElementById(pref+"SummaryCombined"),wrap=document.getElementById(pref+"MiniSummary");
+  if(!p||!a||!c||!wrap)return;
+  p.style.display=currentPerson==="alina"?"none":"block";
+  a.style.display=currentPerson==="petro"?"none":"block";
+  c.style.display="block";
+  wrap.classList.toggle("three",currentPerson==="combined");
+}
 function renderExpenses(){
-  const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value;syncTopMonth();renderMonthlySummary(m);updateSummaryVisibility();renderStats();
-  const rows=personFiltered(expenses).filter(x=>(!m||x.expense_date.startsWith(m))&&(!s||x.status===s));
+  const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value,loanFilter=document.getElementById("loanTypeFilter").value;
+  syncTopMonth(); renderMonthlySummary(m); updateSummaryVisibility();
+  document.getElementById("expenseSummaryWrap").classList.toggle("hidden",currentSection!=="expenses");
+  document.getElementById("loanSummaryWrap").classList.toggle("hidden",currentSection!=="loans");
+  document.getElementById("expenseStatsWrap").classList.toggle("hidden",currentSection!=="expenses");
+  document.getElementById("loanStatsWrap").classList.toggle("hidden",currentSection!=="loans");
+  renderStats();
+  const kind=currentSection==="loans"?"loan":"payment";
+  const rows=personFiltered(expenses).filter(x=>(x.request_kind||"payment")===kind&&(!m||x.expense_date.startsWith(m))&&(kind!=="payment"||!s||x.status===s)&&(kind!=="loan"||!loanFilter||loanDirectionValue(x)===loanFilter));
   const host=document.getElementById("expenseRows");
   host.innerHTML=rows.length?rows.map(x=>`<div class="expense-card">
     <div class="expense-main">
@@ -629,7 +687,7 @@ function renderExpenses(){
         <div style="min-width:0">
           <div class="expense-amount">${new Intl.NumberFormat("uk-UA",{maximumFractionDigits:2}).format(Number(x.amount)||0)}<span class="currency">${esc(x.currency)}</span></div>
           <div class="expense-counterparty">${esc(x.counterparty)}</div>
-          <div class="expense-desc">${esc(x.description)}</div>
+          <div class="expense-desc">${currentSection==="loans"?loanDirectionLabel(loanDirectionValue(x))+" · ":""}${esc(x.description)}</div>
         </div>
       </div>
       <div class="expense-actions">
@@ -641,22 +699,34 @@ function renderExpenses(){
       <div class="row"><span>Дата</span><b>${x.expense_date}</b></div>
       <div class="row"><span>Кому</span><b>${personLabel(x.expense_person||"petro")}</b></div>
       <div class="row"><span>Тип</span><b>${requestKindLabel(x.request_kind)}</b></div>
+      ${currentSection==="loans"?`<div class="row"><span>Рух</span><b>${loanDirectionLabel(loanDirectionValue(x))}</b></div>`:""}
       <div class="row"><span>Категорія</span><b>${esc(x.category)}</b></div>
       <div class="row"><span>Компанія</span><b>${esc(x.entity)}</b></div>
       <div class="row"><span>Дія</span><span class="link" onclick="openDetail('${x.id}')">Відкрити повністю →</span></div>
     </div></details>
   </div>`).join(""):`<div class="card empty">Немає записів за цей місяць.</div>`;
-}
-function openNew(){
+}function openNew(){
   if(profile.role!=="accountant"){toast("Нові витрати створює бухгалтер");return}
-  document.getElementById("expenseForm").reset();document.getElementById("editId").value="";document.getElementById("fDate").value=today();document.getElementById("fPerson").value=currentPerson==="alina"?"alina":"petro";document.getElementById("fRequestKind").value="payment";document.getElementById("expenseModalTitle").textContent="Новий запис";openModal("expenseModal");
+  document.getElementById("expenseForm").reset();document.getElementById("editId").value="";document.getElementById("fDate").value=today();document.getElementById("fPerson").value=currentPerson==="alina"?"alina":"petro";document.getElementById("fRequestKind").value=currentSection==="loans"?"loan":"payment";updateRequestKindUI();document.getElementById("expenseModalTitle").textContent=currentSection==="loans"?"Нова позика":"Новий запис";openModal("expenseModal");
 }
 function openEdit(id){
   const x=expenses.find(v=>v.id===id);if(!x||profile.role!=="accountant"||!["draft","rejected"].includes(x.status))return;
   closeModal("detailModal");document.getElementById("editId").value=id;document.getElementById("expenseModalTitle").textContent="Редагувати витрату";
   document.getElementById("fDate").value=x.expense_date;document.getElementById("fPerson").value=x.expense_person||"petro";document.getElementById("fRequestKind").value=x.request_kind||"payment";document.getElementById("fEntity").value=x.entity;document.getElementById("fCategory").value=x.category;document.getElementById("fCounterparty").value=x.counterparty;
-  document.getElementById("fDescription").value=x.description;document.getElementById("fAmount").value=x.amount;document.getElementById("fCurrency").value=x.currency;document.getElementById("fPayment").value=x.payment_method||"Bank transfer";
-  document.getElementById("fFile").value="";openModal("expenseModal");
+  document.getElementById("fDescription").value=x.description;document.getElementById("fAmount").value=x.amount;document.getElementById("fCurrency").value=x.currency;updateRequestKindUI();document.getElementById("fPayment").value=x.payment_method||((x.request_kind||"payment")==="loan"?"borrowed":"Bank transfer");
+  document.getElementById("fFile").value="";document.getElementById("expenseModalTitle").textContent=(x.request_kind||"payment")==="loan"?"Редагувати позику":"Редагувати витрату";openModal("expenseModal");
+}
+function updateRequestKindUI(){
+  const kind=document.getElementById("fRequestKind")?.value||"payment";
+  const payment=document.getElementById("fPayment"); const label=document.getElementById("fPaymentLabel");
+  if(!payment||!label) return;
+  if(kind==="loan"){
+    label.firstChild.textContent='Тип позики';
+    payment.innerHTML='<option value="borrowed">Позичили</option><option value="contributed">Внесли</option>';
+  }else{
+    label.firstChild.textContent='Спосіб оплати';
+    payment.innerHTML='<option>Bank transfer</option><option>Card</option><option>Cash</option><option>Other</option>';
+  }
 }
 async function saveExpense(e){
   e.preventDefault();const btn=document.getElementById("saveExpenseBtn");btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Збереження';
@@ -695,12 +765,15 @@ async function openDetail(id){
   }else if(profile.role==="accountant"&&x.status==="approved"){
     controls=`<button class="btn blue" style="width:100%;margin-top:18px" onclick="paidCurrent()">Позначити як оплачено</button>`;
   }else if(x.status==="included"){controls=`<div class="locked" style="margin-top:18px">Витрату вже зафіксовано у місячному звіті.</div>`}
+  if(profile.role==="owner"){
+    controls += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><button class="btn danger-outline" style="width:100%" onclick="deleteCurrentRecord()">Видалити назавжди</button><div class="muted small" style="margin-top:7px;text-align:center">Можна видалити будь-який запис, навіть оплачений або включений у звіт.</div></div>`;
+  }
   const logs=auditLogs.filter(l=>l.expense_id===x.id).map(l=>`<div class="event"><div class="dot"></div><div><b>${esc(profiles[l.actor_id]?.display_name||"User")}</b> · ${ACTION_LABELS[l.action]||esc(l.action)}
     <div class="sub">${new Date(l.created_at).toLocaleString("uk-UA")}${l.note?" · "+esc(l.note):""}</div></div></div>`).join("");
   document.getElementById("detailContent").innerHTML=`<div class="detailgrid">
     <div class="card" style="margin:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>${money(x.amount,x.currency)}</h2>${statusBadge(x.status)}</div>
       <div class="kv"><div>Дата</div><div><b>${x.expense_date}</b></div><div>Кому</div><div><b>${personLabel(x.expense_person||"petro")}</b></div><div>Тип</div><div><b>${requestKindLabel(x.request_kind)}</b></div><div>Компанія</div><div><b>${esc(x.entity)}</b></div><div>Категорія</div><div><b>${esc(x.category)}</b></div>
-      <div>Оплата</div><div><b>${esc(x.payment_method||"—")}</b></div><div>Створив</div><div><b>${esc(creator)}</b></div><div>Документ</div><div>${x.attachment_path?`<span class="link" onclick="openDocument('${esc(x.attachment_path)}')">Відкрити</span>`:"—"}</div>
+      ${(x.request_kind||"payment")==="loan"?`<div>Рух</div><div><b>${loanDirectionLabel(loanDirectionValue(x))}</b></div>`:`<div>Оплата</div><div><b>${esc(x.payment_method||"—")}</b></div>`}<div>Створив</div><div><b>${esc(creator)}</b></div><div>Документ</div><div>${x.attachment_path?`<span class="link" onclick="openDocument('${esc(x.attachment_path)}')">Відкрити</span>`:"—"}</div>
       ${x.owner_comment?`<div>Коментар</div><div><b>${esc(x.owner_comment)}</b></div>`:""}${x.approved_at?`<div>Approved</div><div><b>${esc(approver)} · ${new Date(x.approved_at).toLocaleString("uk-UA")}</b></div>`:""}</div>${controls}
     </div><div class="card" style="margin:0"><h2>Audit trail</h2><div class="timeline">${logs||'<div class="muted">Немає подій.</div>'}</div></div></div>`;
   openModal("detailModal");
@@ -712,6 +785,22 @@ async function submitCurrent(){await callRpc("submit_expense",{p_id:currentDetai
 async function approveCurrent(){await callRpc("approve_expense",{p_id:currentDetail,p_comment:document.getElementById("approveComment").value.trim()||null},"Витрату затверджено")}
 async function rejectCurrent(){const note=document.getElementById("rejectComment").value.trim();if(!note){toast("Вкажи причину відхилення");return}await callRpc("reject_expense",{p_id:currentDetail,p_comment:note},"Витрату відхилено")}
 async function paidCurrent(){await callRpc("mark_expense_paid",{p_id:currentDetail},"Позначено як оплачено")}
+async function deleteCurrentRecord(){
+  if(!profile||profile.role!=="owner"||!currentDetail)return;
+  const x=expenses.find(v=>v.id===currentDetail);if(!x)return;
+  const kind=(x.request_kind||"payment")==="loan"?(loanDirectionValue(x)==="contributed"?"внесення":"позику"):"витрату";
+  const amount=money(x.amount,x.currency);
+  const ok=confirm(`Видалити ${kind} назавжди?\n\n${x.counterparty} · ${amount}\n\nЦю дію неможливо скасувати.`);
+  if(!ok)return;
+  const id=currentDetail;
+  const attachment=x.attachment_path||null;
+  const r=await sb.rpc("delete_expense_owner",{p_id:id});
+  if(r.error){toast("Не вдалося видалити: "+r.error.message);return}
+  if(attachment){
+    try{const sr=await sb.storage.from("expense-documents").remove([attachment]);if(sr?.error)console.warn("Attachment cleanup failed",sr.error)}catch(e){console.warn("Attachment cleanup failed",e)}
+  }
+  currentDetail=null;closeModal("detailModal");await refreshAll();toast("Запис видалено");
+}
 async function openDocument(path){
   const r=await sb.storage.from("expense-documents").createSignedUrl(path,90);if(r.error){toast(r.error.message);return}window.open(r.data.signedUrl,"_blank");
 }
@@ -720,6 +809,14 @@ function currencyBreakdown(list){
   const by={UAH:0,USD:0,EUR:0};
   list.forEach(x=>{ if(by[x.currency]!==undefined) by[x.currency]+=Number(x.amount)||0; });
   return order.map(c=>`<div class="summary-line"><span>${c}</span><b>${money(by[c],c)}</b></div>`).join("");
+}
+function renderLoanBreakdown(list, mode="plain"){
+  const order=["UAH","USD","EUR"];
+  const sums={borrowed:{UAH:0,USD:0,EUR:0},contributed:{UAH:0,USD:0,EUR:0}};
+  list.forEach(x=>{const d=loanDirectionValue(x); if(sums[d]&&sums[d][x.currency]!==undefined) sums[d][x.currency]+=Number(x.amount)||0;});
+  if(mode==="total") return order.map(c=>{const net=(sums.contributed[c]||0)-(sums.borrowed[c]||0); const label=net>0?"Внесли":net<0?"Позичили":"Баланс"; return `<div class="summary-line"><span>${c} · ${label}</span><b>${net===0?money(0,c):(net>0?'+':'−')+money(Math.abs(net),c)}</b></div>`}).join("");
+  const prefix=mode==="borrowed"?"Позичили":"Внесли"; const target=sums[mode]||{UAH:0,USD:0,EUR:0};
+  return order.map(c=>`<div class="summary-line"><span>${c} · ${prefix}</span><b>${money(target[c],c)}</b></div>`).join("");
 }
 function renderMonthlySummary(month){
   const eligible=expenses.filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
@@ -732,6 +829,12 @@ function renderMonthlySummary(month){
   if(ep) ep.innerHTML=currencyBreakdown(petro);
   if(ea) ea.innerHTML=currencyBreakdown(alina);
   if(ec) ec.innerHTML=currencyBreakdown(eligible);
+  const loans=expenses.filter(x=>(x.request_kind||"payment")==="loan"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
+  const loanPetro=loans.filter(x=>(x.expense_person||"petro")==="petro"), loanAlina=loans.filter(x=>(x.expense_person||"petro")==="alina");
+  const lp=document.getElementById("loanMonthTotalsPetro"), la=document.getElementById("loanMonthTotalsAlina"), lc=document.getElementById("loanMonthTotalsCombined");
+  if(lp) lp.innerHTML=renderLoanBreakdown(loanPetro, "borrowed")+renderLoanBreakdown(loanPetro,"contributed");
+  if(la) la.innerHTML=renderLoanBreakdown(loanAlina, "borrowed")+renderLoanBreakdown(loanAlina,"contributed");
+  if(lc) lc.innerHTML=renderLoanBreakdown(loans, "total");
 }
 function renderReport(){
   const m=document.getElementById("reportMonth").value;renderMonthlySummary(m);const eligible=personFiltered(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(m)&&["approved","paid","included"].includes(x.status));
@@ -746,7 +849,7 @@ async function finalizeMonth(){
   if(!confirm(`Зафіксувати всі Approved/Paid витрати за ${m}? Фіксація застосовується до всіх витрат місяця.`))return;
   await callRpc("finalize_month",{p_month:m},`Місяць ${m} зафіксовано`);
 }
-function renderAll(){syncTopMonth();renderExpenses();renderReport();updateAppBadge()}
+function renderAll(){syncTopMonth();updateActionButtons();if(currentSection==="report")renderReport();else renderExpenses();updateAppBadge()}
 boot();
 </script>
 </body>
