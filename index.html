@@ -825,6 +825,14 @@ function updateActionButtons(){
   if(restricted&&currentSection==="loans")currentSection="expenses";
   const selector=document.getElementById("personSwitcher");
   if(selector)selector.style.display=restricted?"none":currentSection==="loans"?"none":"grid";
+  // Single-tab layout for Alina's personal expense list.
+  const viewTabs=document.querySelector(".view-tabs");
+  if(viewTabs){
+    viewTabs.style.gridTemplateColumns=restricted?"minmax(0,1fr)":"";
+    viewTabs.style.maxWidth=restricted?"260px":"";
+  }
+  const reportSummary=document.querySelector("#reportSection .monthly-summary");
+  if(reportSummary)reportSummary.style.gridTemplateColumns=restricted?"minmax(0,1fr)":"";
   if(newBtn){
     newBtn.textContent=currentSection==="loans"?"+ Позика":currentSection==="savings"?"+ Збереження":"+ Витрата";
     if(currentSection==="savings") newBtn.style.display=isOwner?"inline-block":"none";
