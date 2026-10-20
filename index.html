@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="COOSH Finance"/>
   <link rel="manifest" href="./manifest.webmanifest"/>
   <link rel="icon" href="./icon.svg" type="image/svg+xml"/>
-  <title>COOSH Finance Control · Cloud V4.7.1</title>
+  <title>COOSH Finance Control · Cloud V4.8.0</title>
   <script>
 /* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
    No CDN dependency. */
@@ -74,6 +74,33 @@
         }
       },
       getSession: async ()=>{const s=await this._validSession();return {data:{session:s},error:null}},
+      setRecoverySession: async ({access_token,refresh_token})=>{
+        try{
+          if(!access_token||!refresh_token)return {data:null,error:{message:"У посиланні відсутні токени відновлення. Запитай нове посилання."}};
+          const r=await requestWithTimeout(this.url+'/auth/v1/user',{method:'GET',headers:{apikey:this.key,Authorization:'Bearer '+access_token}},15000);
+          const x=await parseRes(r);if(x.error)return x;
+          const s={access_token,refresh_token,user:x.data,expires_at:Math.floor(Date.now()/1000)+3600};
+          this._session=s;safeSet(s);
+          return {data:{session:s,user:x.data},error:null};
+        }catch(e){return {data:null,error:{message:e?.message||String(e)}}}
+      },
+      verifyRecoveryTokenHash: async (token_hash)=>{
+        try{
+          const r=await requestWithTimeout(this.url+'/auth/v1/verify',{method:'POST',headers:{apikey:this.key,'Content-Type':'application/json'},body:JSON.stringify({type:'recovery',token_hash})},15000);
+          const x=await parseRes(r);if(x.error)return x;
+          return await this.auth.setRecoverySession({access_token:x.data?.access_token,refresh_token:x.data?.refresh_token});
+        }catch(e){return {data:null,error:{message:e?.message||String(e)}}}
+      },
+      updateUser: async ({password})=>{
+        try{
+          const s=await this._validSession();
+          if(!s)return {data:null,error:{message:"Сесія відновлення завершилася. Запитай нове посилання."}};
+          const r=await requestWithTimeout(this.url+'/auth/v1/user',{method:'PUT',headers:{apikey:this.key,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:JSON.stringify({password})},15000);
+          const x=await parseRes(r);if(x.error)return x;
+          if(x.data){s.user=x.data;this._session=s;safeSet(s)}
+          return {data:{user:x.data},error:null};
+        }catch(e){return {data:null,error:{message:e?.message||String(e)}}}
+      },
       signOut: async ()=>{try{const s=await this._validSession();if(s)await requestWithTimeout(this.url+'/auth/v1/logout',{method:'POST',headers:{apikey:this.key,Authorization:'Bearer '+s.access_token}})}catch(e){}this._session=null;safeDel();return {error:null}}
     };
     this.storage={from:(bucket)=>({
@@ -217,11 +244,29 @@
         <button class="btn black" id="loginBtn" type="submit">Увійти</button>
       </form>
       <div class="error" id="loginError"></div>
+      <div class="notice" id="authNotice" style="display:none;margin-top:14px"></div>
       <div class="actions" style="margin-top:16px">
         <button class="btn" type="button" onclick="testConnection()">Перевірити з'єднання</button>
         <span class="link small" onclick="resetCloudConfig()">Змінити cloud-підключення</span>
       </div>
       <div class="muted small" id="connectionInfo" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="recoveryView" style="display:none">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="logo">C</div>
+      <h1 style="margin-top:16px">Встановити новий пароль</h1>
+      <p class="muted">COOSH Finance Control · Відновлення доступу до акаунта.</p>
+      <form class="stack" id="recoveryForm" onsubmit="completePasswordRecovery(event)">
+        <label>Новий пароль<input id="recoveryPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label>Повтори новий пароль<input id="recoveryPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required></label>
+        <button class="btn black" id="recoverySaveBtn" type="submit">Зберегти новий пароль</button>
+      </form>
+      <div class="error" id="recoveryError" role="alert"></div>
+      <p class="muted small" style="margin-top:16px">Якщо посилання прострочене, надішли нове з Supabase → Authentication → Users. Не пересилай посилання іншим.</p>
     </div>
   </div>
 </div>
@@ -510,6 +555,102 @@ async function updateAppBadge(){
 }
 function openModal(id){document.getElementById(id).style.display="flex"}function closeModal(id){document.getElementById(id).style.display="none"}
 
+
+const RECOVERY_PENDING_KEY="coosh_recovery_callback_v1";
+function captureRecoveryCallback(){
+  let callback=null;
+  const hashParams=new URLSearchParams(location.hash.startsWith("#")?location.hash.slice(1):location.hash);
+  const queryParams=new URLSearchParams(location.search);
+  const kind=hashParams.get("type")||queryParams.get("type");
+  const recovery=kind==="recovery"||hashParams.has("error_code")||queryParams.has("token_hash")&&kind==="recovery";
+  if(recovery){
+    callback={
+      access_token:hashParams.get("access_token")||"",
+      refresh_token:hashParams.get("refresh_token")||"",
+      token_hash:queryParams.get("token_hash")||"",
+      error:hashParams.get("error_description")||hashParams.get("error")||queryParams.get("error_description")||"",
+      time:Date.now()
+    };
+    const clean=new URL(location.href);
+    clean.hash="";
+    ["type","token_hash","error","error_code","error_description"].forEach(key=>clean.searchParams.delete(key));
+    history.replaceState(null,"",clean.pathname+clean.search);
+    try{sessionStorage.setItem(RECOVERY_PENDING_KEY,JSON.stringify(callback))}catch(e){}
+  }
+  if(!callback){
+    try{
+      const stored=JSON.parse(sessionStorage.getItem(RECOVERY_PENDING_KEY)||"null");
+      if(stored&&stored.time&&Date.now()-stored.time<60*60*1000)callback=stored;
+      else sessionStorage.removeItem(RECOVERY_PENDING_KEY);
+    }catch(e){}
+  }
+  return callback;
+}
+function clearRecoveryCallback(){
+  try{sessionStorage.removeItem(RECOVERY_PENDING_KEY)}catch(e){}
+}
+const pendingRecovery=captureRecoveryCallback();
+
+function showRecoveryError(message){
+  showOnly("recoveryView");
+  document.getElementById("recoveryForm").style.display="none";
+  const err=document.getElementById("recoveryError");
+  err.textContent=message+" Надішли нове посилання для відновлення пароля.";
+  err.style.display="block";
+}
+async function processRecoveryCallback(callback){
+  if(callback.error){clearRecoveryCallback();showRecoveryError("Посилання недійсне або його термін закінчився: "+callback.error);return}
+  try{
+    let result;
+    if(callback.access_token&&callback.refresh_token){
+      result=await sb.auth.setRecoverySession(callback);
+    }else if(callback.token_hash){
+      result=await sb.auth.verifyRecoveryTokenHash(callback.token_hash);
+    }else{
+      clearRecoveryCallback();showRecoveryError("Неповне посилання для відновлення пароля.");return;
+    }
+    clearRecoveryCallback();
+    if(result.error){showRecoveryError(result.error.message||"Не вдалося перевірити посилання.");return}
+    showOnly("recoveryView");
+    document.getElementById("recoveryForm").style.display="block";
+    document.getElementById("recoveryError").style.display="none";
+    document.getElementById("recoveryPassword").focus();
+  }catch(e){
+    clearRecoveryCallback();
+    showRecoveryError("Не вдалося підтвердити посилання: "+(e?.message||String(e)));
+  }
+}
+async function completePasswordRecovery(e){
+  e.preventDefault();
+  const first=document.getElementById("recoveryPassword").value;
+  const second=document.getElementById("recoveryPasswordConfirm").value;
+  const err=document.getElementById("recoveryError");
+  err.style.display="none";
+  if(first.length<8||first!==second){
+    err.textContent=first.length<8?"Пароль має містити щонайменше 8 символів.":"Паролі не збігаються.";
+    err.style.display="block";return;
+  }
+  const button=document.getElementById("recoverySaveBtn");
+  button.disabled=true;button.textContent="Збереження…";
+  try{
+    const {data,error}=await sb.auth.updateUser({password:first});
+    if(error)throw error;
+    const email=data?.user?.email||"";
+    await sb.auth.signOut();
+    document.getElementById("recoveryForm").reset();
+    clearRecoveryCallback();
+    showOnly("authView");
+    if(email)document.getElementById("loginEmail").value=email;
+    const notice=document.getElementById("authNotice");
+    notice.textContent="Пароль успішно змінено. Тепер увійди з новим паролем.";
+    notice.style.display="block";
+  }catch(ex){
+    err.textContent=ex?.message||String(ex);err.style.display="block";
+  }finally{
+    button.disabled=false;button.textContent="Зберегти новий пароль";
+  }
+}
+
 async function waitForSupabase(){
   for(let i=0;i<5;i++){
     if(window.supabase && typeof window.supabase.createClient==="function") return true;
@@ -533,7 +674,12 @@ async function boot(){
     return;
   }
 
-  if(!initClient()){showOnly("setupView");return}
+  if(!initClient()){
+    showOnly("setupView");
+    if(pendingRecovery)document.querySelector("#setupView .muted").textContent="Для завершення відновлення пароля спочатку підключи Supabase Project URL та publishable/anon key цього застосунку.";
+    return;
+  }
+  if(pendingRecovery){await processRecoveryCallback(pendingRecovery);return}
   try{
     const {data:{session},error}=await sb.auth.getSession();
     if(error) throw error;
@@ -549,7 +695,7 @@ async function boot(){
   }
 }
 function showOnly(id){
-  ["bootView","setupView","authView","appView"].forEach(x=>{
+  ["bootView","setupView","authView","recoveryView","appView"].forEach(x=>{
     const el=document.getElementById(x);
     if(el) el.style.display=x===id?"block":"none";
   });
