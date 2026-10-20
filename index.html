@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="COOSH Finance"/>
   <link rel="manifest" href="./manifest.webmanifest"/>
   <link rel="icon" href="./icon.svg" type="image/svg+xml"/>
-  <title>COOSH Finance Control · Cloud V4.8.0</title>
+  <title>COOSH Finance Control · Cloud V4.9.0</title>
   <script>
 /* COOSH Supabase Lite: embedded client for Auth, PostgREST RPC and Storage.
    No CDN dependency. */
@@ -295,7 +295,7 @@
     </div>
 
     <section id="expensesSection">
-      <div class="person-switch">
+      <div class="person-switch" id="personSwitcher">
         <button class="btn person-tab active" id="personPetro" onclick="setPerson('petro')">Петро</button>
         <button class="btn person-tab" id="personAlina" onclick="setPerson('alina')">Аліна</button>
         <button class="btn person-tab" id="personCombined" onclick="setPerson('combined')">Разом</button>
@@ -349,9 +349,9 @@
       <div class="card">
         <div class="pagehead" style="margin:0 0 10px"><div><h2 style="margin:0">Загальна місячна сума витрат</h2><div class="muted small">Показані тільки витрати типу «Оплата», без позик.</div></div></div>
         <div class="monthly-summary">
-          <div class="summary-card"><h3>Петро</h3><div class="summary-lines" id="monthTotalsPetro"></div></div>
-          <div class="summary-card"><h3>Аліна</h3><div class="summary-lines" id="monthTotalsAlina"></div></div>
-          <div class="summary-card"><h3>Разом</h3><div class="summary-lines" id="monthTotalsCombined"></div></div>
+          <div class="summary-card" id="reportSummaryPetro"><h3>Петро</h3><div class="summary-lines" id="monthTotalsPetro"></div></div>
+          <div class="summary-card" id="reportSummaryAlina"><h3>Аліна</h3><div class="summary-lines" id="monthTotalsAlina"></div></div>
+          <div class="summary-card" id="reportSummaryCombined"><h3>Разом</h3><div class="summary-lines" id="monthTotalsCombined"></div></div>
         </div>
       </div>
       <div class="reportgrid">
@@ -454,8 +454,14 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",2400)}
 function statusBadge(s){return `<span class="badge ${s}">${STATUS_LABELS[s]||esc(s)}</span>`}
 function personLabel(p){return p==="alina"?"Аліна":"Петро"}
+// Alina's owner profile is confined to her own payment requests.
+function isAlinaOwner(){return !!(profile&&profile.role==="owner"&&profile.approval_person==="alina")}
+function visibleExpenses(list){
+  return isAlinaOwner()?list.filter(x=>(x.expense_person||"petro")==="alina"&&(x.request_kind||"payment")==="payment"):list;
+}
 function setPerson(p){
-  currentPerson=p;
+  if(isAlinaOwner()&&p!=="alina")return;
+  currentPerson=isAlinaOwner()?"alina":p;
   ["petro","alina","combined"].forEach(k=>{
     const id=k==="petro"?"personPetro":k==="alina"?"personAlina":"personCombined";
     const el=document.getElementById(id);
@@ -464,6 +470,7 @@ function setPerson(p){
   renderAll();
 }
 function personFiltered(list){
+  if(isAlinaOwner())return visibleExpenses(list);
   if(currentPerson==="combined") return list;
   return list.filter(x=>(x.expense_person||"petro")===currentPerson);
 }
@@ -765,11 +772,16 @@ async function testConnection(){
     err.style.display="block";
   }
 }
-async function logout(){if(realtimeChannel)clearInterval(realtimeChannel);await sb.auth.signOut();currentUser=null;profile=null;showOnly("authView")}
+async function logout(){if(realtimeChannel)clearInterval(realtimeChannel);await sb.auth.signOut();currentUser=null;profile=null;expenses=[];savings=[];profiles={};auditLogs=[];currentSection="expenses";currentPerson="petro";showOnly("authView")}
 async function loadApp(){
   const {data:p,error}=await sb.from("profiles").select("user_id,display_name,email,role,approval_person").eq("user_id",currentUser.id).single();
   if(error||!p){showOnly("authView");alert("Для цього акаунта не призначена роль у таблиці profiles. Виконай 02_assign_users.sql.");return}
-  profile=p;showOnly("appView");document.getElementById("userLine").textContent=`${p.display_name} · ${p.role==="owner"?"Власник":"Бухгалтер"}`;
+  profile=p;
+  currentPerson=isAlinaOwner()?"alina":"petro";
+  currentSection="expenses";
+  expenses=[];savings=[];auditLogs=[];profiles={};
+  showOnly("appView");document.getElementById("userLine").textContent=`${p.display_name} · ${p.role==="owner"?"Власник":"Бухгалтер"}`;
+  showSection("expenses");
   document.getElementById("newExpenseBtn").style.display=p.role==="accountant"?"inline-block":"none";document.getElementById("finalizeBtn").style.display=p.role==="owner"?"inline-block":"none";updateActionButtons();
   await refreshAll();await refreshNotificationButton();subscribeRealtime();
   const deepId=new URLSearchParams(location.search).get("expense");
@@ -780,23 +792,39 @@ function subscribeRealtime(){
   realtimeChannel=setInterval(()=>refreshAll(),8000);
 }
 async function refreshAll(){
-  const wantsSavings=profile&&profile.role==="owner";
+  // Restrict Alina's network requests too: do not download Petro's expenses or global logs.
+  const restricted=isAlinaOwner();
+  const expenseQuery=restricted
+    ?sb.from("expenses").select("*").eq("expense_person","alina").eq("request_kind","payment")
+    :sb.from("expenses").select("*");
   const [ex,pr,al,sv]=await Promise.all([
-    sb.from("expenses").select("*").order("expense_date",{ascending:false}).order("created_at",{ascending:false}),
-    sb.from("profiles").select("user_id,display_name,email,role,approval_person"),
-    sb.from("audit_log").select("*").order("created_at",{ascending:false}),
-    wantsSavings?sb.from("savings").select("*").order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
+    expenseQuery.order("expense_date",{ascending:false}).order("created_at",{ascending:false}),
+    restricted?sb.from("profiles").select("user_id,display_name,email,role,approval_person").eq("user_id",currentUser.id)
+      :sb.from("profiles").select("user_id,display_name,email,role,approval_person"),
+    restricted?Promise.resolve({data:[],error:null}):sb.from("audit_log").select("*").order("created_at",{ascending:false}),
+    profile&&profile.role==="owner"&&!restricted
+      ?sb.from("savings").select("*").order("created_at",{ascending:false})
+      :Promise.resolve({data:[],error:null})
   ]);
   if(ex.error){toast(ex.error.message);return}
-  expenses=ex.data||[];savings=sv&&!sv.error?(sv.data||[]):[];profiles={};(pr.data||[]).forEach(x=>profiles[x.user_id]=x);auditLogs=al.data||[];
-  if(profile&&profile.role!=="owner"&&currentSection==="savings") currentSection="expenses";
+  expenses=visibleExpenses(ex.data||[]);savings=sv&&!sv.error?(sv.data||[]):[];
+  profiles={};(pr.data||[]).forEach(x=>profiles[x.user_id]=x);
+  auditLogs=al.data||[];
+  if(restricted)currentPerson="alina";
+  if((restricted||profile.role!=="owner")&&currentSection==="savings")currentSection="expenses";
+  if(restricted&&currentSection==="loans")currentSection="expenses";
   renderAll();
 }
 function updateActionButtons(){
-  const newBtn=document.getElementById("newExpenseBtn"), reportBtn=document.getElementById("reportBtn"), monthCtl=document.getElementById("topMonthControl"), tabSavings=document.getElementById("tabSavings");
-  const isOwner=!!(profile&&profile.role==="owner");
-  if(tabSavings) tabSavings.style.display=isOwner?"inline-flex":"none";
-  if(!isOwner&&currentSection==="savings") currentSection="expenses";
+  const newBtn=document.getElementById("newExpenseBtn"), reportBtn=document.getElementById("reportBtn"), monthCtl=document.getElementById("topMonthControl"), tabSavings=document.getElementById("tabSavings"), tabLoans=document.getElementById("tabLoans"), finalizeBtn=document.getElementById("finalizeBtn");
+  if(finalizeBtn)finalizeBtn.style.display=profile&&profile.role==="owner"&&!isAlinaOwner()?"inline-block":"none";
+  const isOwner=!!(profile&&profile.role==="owner"), restricted=isAlinaOwner();
+  if(tabLoans)tabLoans.style.display=restricted?"none":"inline-flex";
+  if(tabSavings)tabSavings.style.display=isOwner&&!restricted?"inline-flex":"none";
+  if((!isOwner||restricted)&&currentSection==="savings")currentSection="expenses";
+  if(restricted&&currentSection==="loans")currentSection="expenses";
+  const selector=document.getElementById("personSwitcher");
+  if(selector)selector.style.display=restricted?"none":currentSection==="loans"?"none":"grid";
   if(newBtn){
     newBtn.textContent=currentSection==="loans"?"+ Позика":currentSection==="savings"?"+ Збереження":"+ Витрата";
     if(currentSection==="savings") newBtn.style.display=isOwner?"inline-block":"none";
@@ -810,6 +838,7 @@ function updateActionButtons(){
   else document.getElementById("tabExpenses")?.classList.add("active");
 }
 function showSection(s){
+  if(isAlinaOwner()&&(s==="loans"||s==="savings"))s="expenses";
   currentSection=s;
   document.getElementById("expensesSection").style.display=(s==="expenses"||s==="loans")?"block":"none";
   document.getElementById("savingsSection").style.display=s==="savings"?"block":"none";
@@ -849,25 +878,27 @@ function expenseIcon(x){const c=(x.category||"").toLowerCase();if((x.request_kin
 function canQuickApprove(x){return !!(profile&&profile.role==="owner"&&x.status==="submitted"&&(profile.approval_person||"petro")===(x.expense_person||"petro"))}
 async function quickApprove(id,btn){if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>'}const r=await sb.rpc("approve_expense",{p_id:id,p_comment:null});if(r.error){toast(r.error.message);if(btn){btn.disabled=false;btn.textContent="✓ Погодити"}return}toast("Запис погоджено");await refreshAll()}
 function updateSummaryVisibility(){
-  if(currentSection==="loans") return;
+  if(currentSection==="loans")return;
   const p=document.getElementById("expenseSummaryPetro"),a=document.getElementById("expenseSummaryAlina"),c=document.getElementById("expenseSummaryCombined"),wrap=document.getElementById("expenseMiniSummary");
   if(!p||!a||!c||!wrap)return;
-  p.style.display=currentPerson==="alina"?"none":"block";
-  a.style.display=currentPerson==="petro"?"none":"block";
-  c.style.display="block";
-  wrap.classList.toggle("three",currentPerson==="combined");
+  const restricted=isAlinaOwner();
+  p.style.display=restricted||currentPerson==="alina"?"none":"block";
+  a.style.display=restricted||currentPerson!=="petro"?"block":"none";
+  c.style.display=restricted?"none":"block";
+  wrap.style.gridTemplateColumns=restricted?"minmax(0,1fr)":"";
+  wrap.classList.toggle("three",!restricted&&currentPerson==="combined");
 }
 function renderExpenses(){
   const m=document.getElementById("monthFilter").value,s=document.getElementById("statusFilter").value,loanFilter=document.getElementById("loanTypeFilter").value;
   syncTopMonth(); renderMonthlySummary(m); updateSummaryVisibility();
-  document.querySelector(".person-switch").style.display=currentSection==="loans"?"none":"grid";
+  document.getElementById("personSwitcher").style.display=isAlinaOwner()||currentSection==="loans"?"none":"grid";
   document.getElementById("expenseSummaryWrap").classList.toggle("hidden",currentSection!=="expenses");
   document.getElementById("loanSummaryWrap").classList.toggle("hidden",currentSection!=="loans");
   document.getElementById("expenseStatsWrap").classList.toggle("hidden",currentSection!=="expenses");
   document.getElementById("loanStatsWrap").classList.toggle("hidden",currentSection!=="loans");
   renderStats();
   const kind=currentSection==="loans"?"loan":"payment";
-  const base=kind==="loan"?expenses:personFiltered(expenses);
+  const base=kind==="loan"?visibleExpenses(expenses):personFiltered(expenses);
   const rows=base.filter(x=>(x.request_kind||"payment")===kind&&(!m||x.expense_date.startsWith(m))&&(kind!=="payment"||!s||x.status===s)&&(kind!=="loan"||!loanFilter||loanDirectionValue(x)===loanFilter));
   const host=document.getElementById("expenseRows");
   host.innerHTML=rows.length?rows.map(x=>`<div class="expense-card">
@@ -946,7 +977,13 @@ async function saveExpense(e){
   openDetail(expenseId);
 }
 async function openDetail(id){
-  currentDetail=id;const x=expenses.find(v=>v.id===id);if(!x)return;
+  const x=visibleExpenses(expenses).find(v=>v.id===id);if(!x)return;
+  currentDetail=id;
+  if(isAlinaOwner()){
+    // Fetch only the audit history for the approved Alina record being opened.
+    const result=await sb.from("audit_log").select("*").eq("expense_id",id).order("created_at",{ascending:false});
+    auditLogs=result.error?[]:(result.data||[]);
+  }
   document.getElementById("dTitle").textContent=x.counterparty;document.getElementById("dSub").textContent=x.description;
   const creator=profiles[x.created_by]?.display_name||"—", approver=profiles[x.approved_by]?.display_name||"—";
   let controls="";
@@ -980,7 +1017,7 @@ async function rejectCurrent(){const note=document.getElementById("rejectComment
 async function paidCurrent(){await callRpc("mark_expense_paid",{p_id:currentDetail},"Позначено як оплачено")}
 async function deleteCurrentRecord(){
   if(!profile||profile.role!=="owner"||!currentDetail)return;
-  const x=expenses.find(v=>v.id===currentDetail);if(!x)return;
+  const x=visibleExpenses(expenses).find(v=>v.id===currentDetail);if(!x)return;
   const kind=(x.request_kind||"payment")==="loan"?(loanDirectionValue(x)==="contributed"?"внесення":"позику"):"витрату";
   const amount=money(x.amount,x.currency);
   const ok=confirm(`Видалити ${kind} назавжди?\n\n${x.counterparty} · ${amount}\n\nЦю дію неможливо скасувати.`);
@@ -1012,7 +1049,7 @@ function renderLoanBreakdown(list, mode="plain"){
   return order.map(c=>`<div class="summary-line"><span>${c} · ${prefix}</span><b>${money(target[c],c)}</b></div>`).join("");
 }
 function renderMonthlySummary(month){
-  const eligible=expenses.filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
+  const eligible=visibleExpenses(expenses).filter(x=>(x.request_kind||"payment")==="payment"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
   const petro=eligible.filter(x=>(x.expense_person||"petro")==="petro");
   const alina=eligible.filter(x=>(x.expense_person||"petro")==="alina");
   document.getElementById("monthTotalsPetro").innerHTML=currencyBreakdown(petro);
@@ -1021,8 +1058,13 @@ function renderMonthlySummary(month){
   const ep=document.getElementById("expenseMonthTotalsPetro"), ea=document.getElementById("expenseMonthTotalsAlina"), ec=document.getElementById("expenseMonthTotalsCombined");
   if(ep) ep.innerHTML=currencyBreakdown(petro);
   if(ea) ea.innerHTML=currencyBreakdown(alina);
-  if(ec) ec.innerHTML=currencyBreakdown(eligible);
-  const loans=expenses.filter(x=>(x.request_kind||"payment")==="loan"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
+  if(ec)ec.innerHTML=currencyBreakdown(eligible);
+  const restricted=isAlinaOwner();
+  for(const [id,visible] of [["reportSummaryPetro",!restricted],["reportSummaryCombined",!restricted],["reportSummaryAlina",true]]){
+    const el=document.getElementById(id);
+    if(el)el.style.display=visible?"block":"none";
+  }
+  const loans=visibleExpenses(expenses).filter(x=>(x.request_kind||"payment")==="loan"&&x.expense_date.startsWith(month)&&["approved","paid","included"].includes(x.status));
   const borrowed=loans.filter(x=>loanDirectionValue(x)==="borrowed"), contributed=loans.filter(x=>loanDirectionValue(x)==="contributed");
   const lb=document.getElementById("loanMonthBorrowedTotals"), li=document.getElementById("loanMonthContributedTotals"), lbal=document.getElementById("loanMonthBalanceTotals");
   if(lb) lb.innerHTML=currencyBreakdown(borrowed);
@@ -1030,19 +1072,20 @@ function renderMonthlySummary(month){
   if(lbal) lbal.innerHTML=renderLoanBreakdown(loans,"total");
 }
 function openNewSaving(){
-  if(!profile||profile.role!=="owner"){toast("Збереження може вносити тільки власник");return}
+  if(!profile||profile.role!=="owner"||isAlinaOwner()){toast("У тебе немає доступу до збережень");return}
   document.getElementById("savingForm").reset();document.getElementById("sDate").value=today();openModal("savingModal");
 }
 async function saveSaving(e){
-  e.preventDefault();const btn=document.getElementById("saveSavingBtn");btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Збереження';
+  e.preventDefault();if(isAlinaOwner())return;const btn=document.getElementById("saveSavingBtn");btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Збереження';
   const r=await sb.rpc("create_saving",{p_saved_date:document.getElementById("sDate").value,p_title:document.getElementById("sTitle").value.trim(),p_note:document.getElementById("sNote").value.trim()||null,p_amount:Number(document.getElementById("sAmount").value),p_currency:document.getElementById("sCurrency").value});
   btn.disabled=false;btn.textContent="Зберегти";if(r.error){toast(r.error.message);return}closeModal("savingModal");await refreshAll();toast("Збереження додано");
 }
 async function deleteSaving(id){
-  if(!profile||profile.role!=="owner")return;const x=savings.find(v=>v.id===id);if(!x)return;if(!confirm(`Видалити збереження?\n\n${x.title} · ${money(x.amount,x.currency)}`))return;
+  if(!profile||profile.role!=="owner"||isAlinaOwner())return;const x=savings.find(v=>v.id===id);if(!x)return;if(!confirm(`Видалити збереження?\n\n${x.title} · ${money(x.amount,x.currency)}`))return;
   const r=await sb.rpc("delete_saving_owner",{p_id:id});if(r.error){toast(r.error.message);return}await refreshAll();toast("Збереження видалено");
 }
 function renderSavings(){
+  if(isAlinaOwner())return;
   const totals=document.getElementById("savingsTotals"), host=document.getElementById("savingsRows"); if(!totals||!host)return;
   totals.innerHTML=currencyBreakdown(savings);
   host.innerHTML=savings.length?savings.map(x=>`<div class="saving-card"><div style="min-width:0"><div class="saving-title">${esc(x.title)}</div>${x.note?`<div class="saving-note">${esc(x.note)}</div>`:""}<div class="saving-date">${x.saved_date||""}</div></div><div class="saving-actions"><div class="saving-amount">${money(x.amount,x.currency)}</div>${profile&&profile.role==="owner"?`<button class="saving-delete" onclick="deleteSaving('${x.id}')">Видалити</button>`:""}</div></div>`).join(""):`<div class="card empty">Список збережень порожній.</div>`;
@@ -1056,7 +1099,7 @@ function renderReport(){
   document.getElementById("reportRows").innerHTML=eligible.length?eligible.map(x=>`<tr><td class="right primary" data-label="Сума"><div class="table-amount">${money(x.amount,x.currency)}</div></td><td class="primary" data-label="Витрата"><span class="link" onclick="openDetail('${x.id}')">${esc(x.counterparty)}</span></td><td data-label="Статус">${statusBadge(x.status)}</td><td data-label="Деталі"><details class="details-toggle"><summary>Деталі</summary><div class="details-body"><div class="row"><span>Дата</span><b>${x.expense_date}</b></div><div class="row"><span>Кому</span><b>${personLabel(x.expense_person||"petro")}</b></div><div class="row"><span>Категорія</span><b>${esc(x.category)}</b></div><div class="row"><span>Компанія</span><b>${esc(x.entity)}</b></div><div class="row"><span>Дія</span><span class="link" onclick="openDetail('${x.id}')">Відкрити →</span></div></div></details></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Немає approved витрат.</td></tr>`;
 }
 async function finalizeMonth(){
-  if(profile.role!=="owner"){toast("Тільки власник може зафіксувати місяць");return}const m=document.getElementById("reportMonth").value;
+  if(profile.role!=="owner"||isAlinaOwner()){toast("Немає доступу до фіксації загального місяця");return}const m=document.getElementById("reportMonth").value;
   if(!confirm(`Зафіксувати всі Approved/Paid витрати за ${m}? Фіксація застосовується до всіх витрат місяця.`))return;
   await callRpc("finalize_month",{p_month:m},`Місяць ${m} зафіксовано`);
 }
