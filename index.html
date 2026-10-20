@@ -795,7 +795,7 @@ async function refreshAll(){
   // Restrict Alina's network requests too: do not download Petro's expenses or global logs.
   const restricted=isAlinaOwner();
   const expenseQuery=restricted
-    ?sb.from("expenses").select("*").eq("expense_person","alina").eq("request_kind","payment")
+    ?sb.from("expenses").select("*").eq("expense_person","alina")
     :sb.from("expenses").select("*");
   const [ex,pr,al,sv]=await Promise.all([
     expenseQuery.order("expense_date",{ascending:false}).order("created_at",{ascending:false}),
