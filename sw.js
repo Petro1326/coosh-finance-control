@@ -1,4 +1,4 @@
-const CACHE='coosh-finance-v5';
+const CACHE='coosh-finance-v6';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
 self.addEventListener('install',event=>{
